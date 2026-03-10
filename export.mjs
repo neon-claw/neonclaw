@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 
 const url = process.argv[2] || 'http://localhost:5199/poster/';
-const output = process.argv[3] || 'neonclaw-meetup-poster.png';
+const output = process.argv[3] || 'public/neonclaw-meetup-poster.png';
 const scale = Number(process.argv[4]) || 3;
 
 const browser = await chromium.launch();
