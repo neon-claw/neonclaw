@@ -257,7 +257,7 @@ const LandingPage = () => {
     <section className="max-w-3xl mx-auto px-6 pb-12">
       <p className="text-center text-xs text-white/20 mb-4" style={{ fontFamily: 'Anonymous Pro' }}>PARTNERS</p>
       <p className="text-center text-xs text-white/15 leading-loose" style={{ fontFamily: 'Anonymous Pro' }}>
-        手工川 x Naughty Labs · 清华创协 · WayToAGI · 开源中国 · 东升科技园 · 天际资本 · AWS · 百度云 · 七牛云 · MiniMax · 智谱 · Kimi · 阶跃星辰 · Zenmux · 昆仑巢 · 融科中心 · TTC · OpenBuild · 蓝驰资本 · 五源资本
+        手工川 x Naughty Labs · 清华大学学生创业协会 · WayToAGI · 开源中国 · 东升科技园 · 天际资本 · AWS · 百度云 · 七牛云 · MiniMax · 智谱 · Kimi · 阶跃星辰 · Zenmux · 昆仑巢 · 融科中心 · TTC · OpenBuild · 蓝驰资本 · 五源资本
       </p>
     </section>
 

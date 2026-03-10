@@ -346,7 +346,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 主办 ]</div>
               <div className="flex flex-wrap gap-6">
-                {['手工川', 'Naughty Labs', '清华创协'].map((s, i) => <LogoSlot key={i} name={s} size="lg" />)}
+                {['手工川', 'Naughty Labs', '清华大学学生创业协会'].map((s, i) => <LogoSlot key={i} name={s} size="lg" />)}
               </div>
             </div>
 
