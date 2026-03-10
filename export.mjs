@@ -8,7 +8,8 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ deviceScaleFactor: scale });
 await page.goto(url, { waitUntil: 'networkidle' });
 
-await page.locator('[data-toolbar]').evaluate(el => el.style.display = 'none');
+// Hide nav bar
+await page.locator('nav').evaluate(el => el.style.display = 'none').catch(() => {});
 const poster = await page.locator('.seede-root');
 await poster.screenshot({ path: output, type: 'png', timeout: 120000 });
 
