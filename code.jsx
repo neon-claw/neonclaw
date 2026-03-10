@@ -218,7 +218,7 @@ const App = () => {
             { name: "手工川", title: "Lovstudio.ai 创始人 · Vibe Coding 布道者", desc: "新世界没有旧神" },
             { name: "杨天润", title: "Naughty Labs 创始人 · NeonClaw Top贡献者", desc: "Agentic Engineering：让 Agent 自己写代码" },
             { name: "江志桐", title: "天际资本董事总经理", desc: "什么样的 AI 公司值得投？" },
-            { name: "苏嘉奕", title: "MiniMax 开放平台生态负责人", desc: "从工具到生态：大模型平台的进化之路" },
+            { name: "苏嘉奕", title: "MiniMax 生态合作负责人", desc: "从工具到生态：大模型平台的进化之路" },
             { name: "黄力昂", title: "共绩科技联合创始人", desc: "龙虾距离永生还有多久？" },
             { name: "郎瀚威", title: "硅谷 AI 观察者", desc: "硅谷前线：海外龙虾生态全景扫描（线上）" }
           ].map((guest, idx) => (
@@ -362,7 +362,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 赞助 ]</div>
               <div className="flex flex-wrap gap-5">
-                {['东升科技园', 'AWS', '百度云', '七牛云', 'Zenmux', 'Minimax', '智谱', 'TTC', '融科资讯中心', '昆仑巢'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
+                {['东升科技园', 'AWS', '百度云', '七牛云', 'Zenmux', 'MiniMax', '智谱', 'TTC', '融科资讯中心', '昆仑巢'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
               </div>
             </div>
 
