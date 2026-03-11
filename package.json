@@ -2,10 +2,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "screenshot": "node screenshot.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.0",
+    "html-to-image": "^1.11.13",
+    "html2canvas-pro": "^2.0.2",
     "modern-screenshot": "^4.6.8",
     "react": "^19",
     "react-dom": "^19"

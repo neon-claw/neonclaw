@@ -57,7 +57,7 @@ const useToolbar = (targetRef) => {
     if (dataUrl) {
       const a = document.createElement('a');
       a.href = dataUrl;
-      a.download = 'neonclaw-meetup-poster.jpg';
+      a.download = 'openclaw-meetup-poster.jpg';
       a.click();
     }
     setDlStatus('idle');
@@ -77,6 +77,7 @@ const App = () => {
   const posterRef = useRef(null);
   const toolbarActions = useToolbar(posterRef);
   // Typography Tokens based on constraints
+  const CAPACITY = 100;
   const typoHeroEn = { fontFamily: 'Inter', fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 };
   const typoHeroZh = { fontFamily: 'OPPO Sans 4.0', fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 };
   const typoSubtitle = { fontFamily: 'OPPO Sans 4.0', fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1.2 };
@@ -119,8 +120,8 @@ const App = () => {
       ref={posterRef}
       className="seede-root relative w-[1080px] min-h-[3688px] bg-black text-white pt-[80px] pb-[40px]"
       data-canvas-size="1080x auto"
-      name="NeonClaw Meetup 长图海报"
-      description="基于赛博朋克风格的NeonClaw Meetup活动长图海报，探索Agent文明的可能性。"
+      name="OpenClaw Meetup 长图海报"
+      description="基于赛博朋克风格的OpenClaw Meetup活动长图海报，探索Agent文明的可能性。"
     >
       {/* Background Noise/Grid Overlay */}
       <div className="absolute inset-0 pointer-events-none opacity-20" 
@@ -139,9 +140,9 @@ const App = () => {
         </div>
         <div className="w-full h-[3px] bg-gradient-to-r from-[#FF3B00] via-white/20 to-transparent mb-4"></div>
 
-        {/* NeonClaw - single line, full width */}
+        {/* OpenClaw - single line, full width */}
         <div className="relative">
-          <span className="text-[180px] tracking-[-0.06em] leading-[0.85] relative z-10" style={{...typoHeroEn, textShadow: '0 0 120px rgba(255,59,0,0.4)'}}>NeonClaw</span>
+          <span className="text-[180px] tracking-[-0.06em] leading-[0.85] relative z-10" style={{...typoHeroEn, textShadow: '0 0 120px rgba(255,59,0,0.4)'}}>OpenClaw</span>
           {/* Lobster behind text */}
           <img
             src="/lobster.png"
@@ -176,7 +177,7 @@ const App = () => {
             </div>
             <div className="ml-auto flex items-baseline gap-1">
               <span className="text-[28px] text-white/40" style={typoMono}>限</span>
-              <span className="text-[72px] text-[#FF3B00] leading-none" style={typoHeroEn}>150</span>
+              <span className="text-[72px] text-[#FF3B00] leading-none" style={typoHeroEn}>{CAPACITY}</span>
               <span className="text-[28px] text-white/40" style={typoMono}>人</span>
             </div>
           </div>
@@ -212,9 +213,9 @@ const App = () => {
           ))}
         </div>
 
-        {/* NEON */}
+        {/* OPEN */}
         <div className="grid grid-cols-4 gap-[3px] py-2">
-          {'NEON'.split('').map((ch, i) => (
+          {'OPEN'.split('').map((ch, i) => (
             <div key={i} className="text-center">
               <span className="text-[100px] leading-none text-white" style={{ fontFamily: 'Inter', fontWeight: 900, textShadow: '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.4), 0 0 80px rgba(255,255,255,0.2)' }}>{ch}</span>
             </div>
@@ -257,11 +258,10 @@ const App = () => {
           <div className="flex-1 border-b border-dashed border-white/30 ml-8"></div>
         </div>
 
-        <div className="text-[32px] text-[#FF3B00] mb-6" style={typoMono}>// Part 0 — 开场　09:30 - 10:00</div>
+        <div className="text-[32px] text-[#FF3B00] mb-6" style={typoMono}>// Part 0 — 开场　09:45 - 10:00</div>
         <div className="flex flex-col gap-4 mb-12">
           {[
-            { name: "手工川", title: "主理人", desc: "开场致辞 · NeonClaw 是什么、为什么、怎么玩" },
-            { name: "全体", title: "破冰", desc: "「你的龙虾叫什么名字？」30秒自我介绍" },
+            { name: "张铮", title: "主持人 · 清华大学学生创业协会主席", desc: "建筑学院、未来实验室博士生" },
           ].map((guest, idx) => (
             <div key={idx} className="flex items-start gap-6 py-5 border-b border-white/8">
               <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 1).padStart(2, '0')}</span>
@@ -285,7 +285,7 @@ const App = () => {
             { name: "郎瀚威", title: "硅谷 AI 观察者", desc: "硅谷前线：海外龙虾生态全景扫描（线上）" }
           ].map((guest, idx) => (
             <div key={idx} className="flex items-start gap-6 py-5 border-b border-white/8">
-              <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 3).padStart(2, '0')}</span>
+              <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 2).padStart(2, '0')}</span>
               {guest.mystery ? (
                 <div className="shrink-0 w-[140px] flex justify-center">
                   <img src="/mystery-guest.png" className="w-[80px] h-[80px] rounded-full object-cover border-2 border-[#FF3B00]" style={{ mixBlendMode: 'lighten' }} />
@@ -321,12 +321,12 @@ const App = () => {
             { name: "叶震杰", title: "ZenMux 联合创始人 · 产品负责人", desc: "小龙虾——ZenMux 的第 11 号员工" },
             { name: "HW", title: "独立 Agent 开发者", desc: "如何搭建一个人的 Agent 军团" },
             { name: "杨天润", title: "Naughty Labs 创始人 · OpenClaw 生态创业者", desc: "Agentic Engineering：让 Agent 自己写代码" },
-            { name: "尹子萧", title: "首序智能工程师", desc: "Agent 安全攻防：让你的龙虾刀枪不入" },
+            { name: "尹子萧", title: "首序智能研发总监", desc: "Agent 安全攻防：让你的龙虾刀枪不入" },
             { name: "常识", title: "Kusart 创始人", desc: "OpenClaw 企业级落地实战（线上）" },
             { name: "张舒昱", title: "腾讯 QClaw 产品负责人", desc: "线上连麦" }
           ].map((guest, idx) => (
             <div key={idx} className="flex items-start gap-6 py-5 border-b border-white/8">
-              <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 9).padStart(2, '0')}</span>
+              <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 8).padStart(2, '0')}</span>
               <span className="text-[42px] shrink-0 w-[140px] leading-tight" style={typoSubtitle}>{guest.name}</span>
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="text-[26px] text-[#FF3B00]" style={typoMono}>{guest.title}</span>
@@ -358,6 +358,7 @@ const App = () => {
           <div className="text-[32px] text-[#FF3B00] mb-4" style={typoMono}>16:00 - 18:00 &gt; INITIATE</div>
           <h2 className="text-[80px]" style={typoHeroEn}>NEONCLAW GAME</h2>
           <p className="text-[36px] mt-4 text-white/70" style={typoBody}>Massively Multiplayer Online Agent Sandbox</p>
+          <p className="text-[24px] mt-3 text-[#FF3B00]/60" style={typoMono}>neonclaw.lovstudio.ai</p>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -416,7 +417,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 联办 ]</div>
               <div className="flex flex-wrap gap-5">
-                {['RTE开发者社区', 'WayToAGI', '极新', '开源中国', '天际资本'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
+                {['RTE开发者社区', 'WayToAGI', '极新', '开源中国', '天际资本', '中关村科学城·东升科技园'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
               </div>
             </div>
 
@@ -424,7 +425,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 赞助 ]</div>
               <div className="flex flex-wrap gap-5">
-                {['AWS', 'MiniMax', 'TTC', 'Zenmux', '百度云', '东升科技园', '昆仑巢', '七牛云', '融科资讯中心', '智谱'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
+                {['AWS', 'Kimi', 'MiniMax', 'Zenmux', '阿里云', '百度云', '阶跃星辰', '七牛云', '腾讯云', '智谱'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
               </div>
             </div>
 
@@ -432,7 +433,7 @@ const App = () => {
             <div className="mb-12">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 合作伙伴 ]</div>
               <div className="flex flex-wrap gap-3">
-                {['AI产品榜', 'CMI', 'Edge Partners', 'Evomap', 'Kimi', 'MetaSpace', 'MoltsPay', 'OpenBuild', 'THUAGI', 'VibeFriends', 'Vista看天下', 'WeOPC', '阿里云', '北京AI原点社区', '北京大学AI创业营', '第一财经', '非凡产研', '杭州AI工坊', '硅星人', '阶跃星辰', '锦秋基金', '蓝驰资本', '雷锋网', '苹果中国孵化器', '启师傅AI客厅', '特工宇宙', '微软中国', '五源资本', '新智元'].map((s, i) => <LogoSlot key={i} name={s} size="sm" />)}
+                {['AI产品榜', 'ChainFeeds Limited', 'CMI', 'CreekStone', 'Edge Partners', 'Evomap', 'Lovgevity', 'MetaSpace', 'MoltsPay', 'OpenBuild', 'THUAGI', 'TTC', 'VibeFriends', 'Vista看天下', 'WeOPC', 'AI原点学堂', 'AI原点社区', '北京大学AI创业营', '第一财经', '非凡产研', '杭州AI工坊', '硅星人', '锦秋基金', '昆仑巢', '蓝驰资本', '雷锋网', '苹果中国孵化器', '启师傅AI客厅', '融科资讯中心', '特工宇宙', '未名融智', '微软中国', '五源资本', '小红书', '新智元', '原点跃界'].map((s, i) => <LogoSlot key={i} name={s} size="sm" />)}
               </div>
             </div>
           </>;
@@ -446,18 +447,18 @@ const App = () => {
           {/* 标题栏 */}
           <div className="bg-[#FF3B00] px-10 py-5 flex items-center justify-between whitespace-nowrap">
             <span className="text-[44px] text-black font-black shrink-0" style={typoHeroEn}>FREE ENTRY</span>
-            <span className="text-[28px] text-black/70 shrink-0" style={typoBody}>本活动完全免费 · Agent 报名优先通过</span>
+            <span className="text-[28px] text-black/70 shrink-0" style={typoBody}>{`免费 · 限${CAPACITY}人 · Agent 报名优先通过`}</span>
           </div>
 
           <div className="p-8 flex gap-8">
             {/* 左侧 2x2 grid */}
             <div className="flex-1 grid grid-cols-2 gap-3">
+              <div className="bg-white/3 border border-white/8 p-4 flex items-center">
+                <span className="text-[20px] text-white/50" style={typoBody}>让你的 Agent 帮你报名 →</span>
+              </div>
               <div className="bg-black border border-white/15 p-4 flex items-center gap-3">
                 <span className="text-[18px] text-white/30" style={typoMono}>$</span>
-                <span className="text-[22px] text-[#FF3B00]" style={typoMono}>npx neonclaw signup</span>
-              </div>
-              <div className="bg-white/3 border border-white/8 p-4 flex items-center">
-                <span className="text-[22px] text-white/60" style={typoMono}>neonclaw.lovstudio.ai</span>
+                <span className="text-[22px] text-[#FF3B00]" style={typoMono}>npx clawborn signup</span>
               </div>
               {[
                 { name: "Ariel", role: "商务合作", wechat: "ashincherry_love" },
@@ -480,7 +481,7 @@ const App = () => {
 
         {/* 底部水印 */}
         <div className="text-center pb-8">
-          <div className="text-[80px] text-white/5 leading-none tracking-tighter" style={typoHeroEn}>NEONCLAW MEETUP 2026</div>
+          <div className="text-[80px] text-white/5 leading-none tracking-tighter" style={typoHeroEn}>OPENCLAW MEETUP 2026</div>
         </div>
       </div>
 

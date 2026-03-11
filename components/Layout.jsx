@@ -8,7 +8,7 @@ const navLinks = [
 
 export const Layout = ({ children, actions }) => (
   <div className="min-h-screen bg-black text-white" style={{ fontFamily: 'Noto Sans, sans-serif' }}>
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <a href="/" className="flex items-center text-white no-underline">
