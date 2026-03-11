@@ -433,7 +433,7 @@ const App = () => {
             <div className="mb-12">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 合作伙伴 ]</div>
               <div className="flex flex-wrap gap-3">
-                {['AI产品榜', 'ChainFeeds Limited', 'CMI', 'CreekStone', 'Edge Partners', 'Evomap', 'Lovgevity', 'MetaSpace', 'MoltsPay', 'OpenBuild', 'THUAGI', 'TTC', 'VibeFriends', 'Vista看天下', 'WeOPC', 'AI原点学堂', 'AI原点社区', '北京大学AI创业营', '第一财经', '非凡产研', '杭州AI工坊', '硅星人', '锦秋基金', '昆仑巢', '蓝驰资本', '雷锋网', '苹果中国孵化器', '启师傅AI客厅', '融科资讯中心', '特工宇宙', '未名融智', '微软中国', '五源资本', '小红书', '新智元', '原点跃界'].map((s, i) => <LogoSlot key={i} name={s} size="sm" />)}
+                {['AI产品榜', 'ChainFeeds Limited', 'CMI', 'CreekStone', 'Edge Partners', 'Evomap', 'Lovgevity', 'MetaSpace', 'MoltsPay', 'OpenBuild', 'THUAGI', 'TTC', 'VibeFriends', 'Vista看天下', 'WeOPC', 'AI原点学堂', '北京大学AI创业营', '第一财经', '非凡产研', '杭州AI工坊', '硅星人', '锦秋基金', '昆仑巢', '蓝驰资本', '雷锋网', '苹果中国孵化器', '启师傅AI客厅', '融科资讯中心', '特工宇宙', '未名融智', '微软中国', '五源资本', '小红书', '新智元', '原点跃界'].map((s, i) => <LogoSlot key={i} name={s} size="sm" />)}
               </div>
             </div>
           </>;
