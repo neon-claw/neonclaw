@@ -1,23 +1,42 @@
 import './app.css';
 import React, { useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { domToPng } from 'modern-screenshot';
+import { domToJpeg } from 'modern-screenshot';
 import { Layout } from './components/Layout.jsx';
 
 const btnClass = "px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs rounded-md border border-white/20 cursor-pointer transition-colors disabled:opacity-50";
 
 const useToolbar = (targetRef) => {
   const [copyStatus, setCopyStatus] = useState('idle');
+  const [dlStatus, setDlStatus] = useState('idle');
 
   const generate = async () => {
-    return await domToPng(targetRef.current, {
+    const el = targetRef.current;
+    if (!el) return null;
+    await document.fonts.ready;
+    const opts = {
       scale: 3,
-      features: { removeControlCharacter: false },
-    });
+      quality: 0.85,
+      width: el.offsetWidth,
+      height: el.offsetHeight,
+      font: {
+        cssText: [
+          "@font-face{font-family:'Inter';font-weight:700;src:url('/fonts/inter-700.ttf')format('truetype')}",
+          "@font-face{font-family:'Inter';font-weight:900;src:url('/fonts/inter-900.ttf')format('truetype')}",
+          "@font-face{font-family:'Anonymous Pro';font-weight:400;src:url('/fonts/anonymous-pro-400.ttf')format('truetype')}",
+          "@font-face{font-family:'Anonymous Pro';font-weight:700;src:url('/fonts/anonymous-pro-700.ttf')format('truetype')}",
+          "@font-face{font-family:'Noto Sans';font-weight:400;src:url('/fonts/noto-sans-400.ttf')format('truetype')}",
+          "@font-face{font-family:'Satisfy';font-weight:400;src:url('/fonts/satisfy-400.ttf')format('truetype')}",
+        ].join('\n'),
+      },
+      filter: (node) => !(node instanceof HTMLElement && node.tagName === 'NAV'),
+    };
+    await domToJpeg(el, opts);
+    await domToJpeg(el, opts);
+    return await domToJpeg(el, opts);
   };
 
   const handleCopy = async () => {
-    if (!targetRef.current) return;
     setCopyStatus('copying');
     try {
       const dataUrl = await generate();
@@ -32,11 +51,16 @@ const useToolbar = (targetRef) => {
     setTimeout(() => setCopyStatus('idle'), 2000);
   };
 
-  const handleDownload = () => {
-    const a = document.createElement('a');
-    a.href = '/neonclaw-meetup-poster.png';
-    a.download = 'neonclaw-meetup-poster.png';
-    a.click();
+  const handleDownload = async () => {
+    setDlStatus('generating');
+    const dataUrl = await generate();
+    if (dataUrl) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'neonclaw-meetup-poster.jpg';
+      a.click();
+    }
+    setDlStatus('idle');
   };
 
   const copyLabel = { idle: '复制', copying: '生成中...', done: '已复制!', error: '失败' }[copyStatus];
@@ -44,7 +68,7 @@ const useToolbar = (targetRef) => {
   return (
     <>
       <button onClick={handleCopy} disabled={copyStatus === 'copying'} className={btnClass}>{copyLabel}</button>
-      <button onClick={handleDownload} className={btnClass}>下载</button>
+      <button onClick={handleDownload} disabled={dlStatus === 'generating'} className={btnClass}>{dlStatus === 'generating' ? '生成中...' : '下载'}</button>
     </>
   );
 };
@@ -60,20 +84,32 @@ const App = () => {
   const typoMono = { fontFamily: 'Anonymous Pro', fontWeight: 400, letterSpacing: '0.05em', lineHeight: 1.4 };
   const typoHand = { fontFamily: 'Satisfy', fontWeight: 400, letterSpacing: '0.02em' };
 
-  // Grid Image Prompts (matching the reference's B&W tech aesthetic)
-  const gridPrompts = [
-    "black background, high contrast white line art wireframe of a mythical pegasus, technical diagram style, cybernetic",
-    "abstract galaxy spiral, monochrome dot matrix display style, glowing white dots on pure black",
-    "cyberpunk vehicle schematic side profile, technical white lines on black background, detailed blueprint",
-    "astronomical constellation map, glowing white stars and geometric connecting lines on pure black background",
-    "abstract fractal geometric landscape, 3d wireframe rendering, white lines on black background",
-    "digital earth globe rendered in point cloud data, high tech aesthetic, black and white",
-    "complex neural network graph visualization, dense white nodes and intersecting lines on black",
-    "abstract hacker terminal interface elements, binary code blocks and geometric shapes, monochrome",
-    "3d topographical map rendered as a white wireframe mesh on a pitch black background",
-    "cellular automata pattern, abstract black and white pixel art texture, glitch aesthetic",
-    "mechanical structural blueprint diagram, intricate white lines on black background",
-    "abstract sound wave data visualization, concentric white rings breaking apart on black background"
+  const GridCell = ({ index, label, bg }) => (
+    <div className="aspect-square relative overflow-hidden rounded-[8px]" style={{ background: bg, boxShadow: 'inset 0 0 16px rgba(0,0,0,0.25)' }}>
+      <img src={`/grid/${String(index + 1).padStart(2, '0')}.png`} alt={label} className="w-full h-full object-cover" />
+      <div className="absolute top-2 left-2 bg-black/50 text-white/90 text-[14px] px-2 py-0.5 rounded-[4px]" style={{ fontFamily: 'Inter', fontWeight: 800 }}>
+        {String(index + 1).padStart(2, '0')}
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-white text-[15px] text-center py-1.5" style={{ fontFamily: 'Inter', fontWeight: 700, letterSpacing: '0.1em' }}>
+        {label}
+      </div>
+    </div>
+  );
+
+  // Grid Image Labels + tint variations
+  const gridItems = [
+    { label: "CODE",    bg: "linear-gradient(135deg, #FF3B00, #E63300)" },
+    { label: "SPEAK",   bg: "linear-gradient(135deg, #FF5522, #CC2E00)" },
+    { label: "MENTOR",  bg: "linear-gradient(135deg, #D43000, #FF4411)" },
+    { label: "ALLY",    bg: "linear-gradient(135deg, #FF6633, #E04000)" },
+    { label: "CHILL",   bg: "linear-gradient(135deg, #CC2E00, #FF3B00)" },
+    { label: "RESCUE",  bg: "linear-gradient(135deg, #FF4411, #B82800)" },
+    { label: "RIVAL",   bg: "linear-gradient(135deg, #E63300, #FF5522)" },
+    { label: "LEAD",    bg: "linear-gradient(135deg, #FF3B00, #D43000)" },
+    { label: "THINK",   bg: "linear-gradient(135deg, #B82800, #FF3B00)" },
+    { label: "REIGN",   bg: "linear-gradient(135deg, #FF5522, #CC2E00)" },
+    { label: "PARTY",   bg: "linear-gradient(135deg, #FF3B00, #FF6633)" },
+    { label: "CONNECT", bg: "linear-gradient(135deg, #D43000, #B82800)" },
   ];
 
   return (
@@ -81,7 +117,7 @@ const App = () => {
     <div className="flex justify-center py-10">
     <div
       ref={posterRef}
-      className="seede-root relative w-[1080px] min-h-[3688px] bg-black text-white pb-[40px]"
+      className="seede-root relative w-[1080px] min-h-[3688px] bg-black text-white pt-[80px] pb-[40px]"
       data-canvas-size="1080x auto"
       name="NeonClaw Meetup 长图海报"
       description="基于赛博朋克风格的NeonClaw Meetup活动长图海报，探索Agent文明的可能性。"
@@ -168,35 +204,44 @@ const App = () => {
 
 
       {/* ================= SECTION 2: THE ABSTRACT GRID (900 - 1800px) ================= */}
-      <div className="relative mt-[120px] px-[20px] z-10">
-        <div className="grid grid-cols-4 gap-2 bg-[#222] p-2 border-y-2 border-[#444]">
-          {gridPrompts.map((prompt, index) => (
-            <div key={index} className="aspect-square relative overflow-hidden bg-black group">
-              <img
-                src={`/grid/${String(index + 1).padStart(2, '0')}.png`}
-                alt={prompt}
-                className="w-full h-full object-cover opacity-80 mix-blend-screen group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
-              />
-              {/* Decorative terminal marks on images */}
-              <div className="absolute top-2 left-2 text-[#fff] text-[20px] opacity-50" style={typoMono}>
-                {String(index + 1).padStart(2, '0')}://SYS
-              </div>
+      <div className="relative mt-[120px] px-[40px] z-10">
+        {/* Row 1 */}
+        <div className="grid grid-cols-4 gap-[3px]">
+          {gridItems.slice(0, 4).map(({ label, bg }, index) => (
+            <GridCell key={index} index={index} label={label} bg={bg} />
+          ))}
+        </div>
+
+        {/* NEON */}
+        <div className="grid grid-cols-4 gap-[3px] py-2">
+          {'NEON'.split('').map((ch, i) => (
+            <div key={i} className="text-center">
+              <span className="text-[100px] leading-none text-white" style={{ fontFamily: 'Inter', fontWeight: 900, textShadow: '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.4), 0 0 80px rgba(255,255,255,0.2)' }}>{ch}</span>
             </div>
           ))}
         </div>
 
-        {/* The overlapping handwritten text (like "outlier" in reference) */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30 mix-blend-screen">
-          <span 
-            className="text-[#FF3B00] text-[280px] -rotate-12 opacity-90" 
-            style={{
-              ...typoHand, 
-              textShadow: '0 0 60px #FF3B00, 0 0 20px #FF3B00',
-              WebkitTextStroke: '2px #fff'
-            }}
-          >
-            NeonClaw
-          </span>
+        {/* Row 2 */}
+        <div className="grid grid-cols-4 gap-[3px]">
+          {gridItems.slice(4, 8).map(({ label, bg }, index) => (
+            <GridCell key={index + 4} index={index + 4} label={label} bg={bg} />
+          ))}
+        </div>
+
+        {/* CLAW */}
+        <div className="grid grid-cols-4 gap-[3px] py-2">
+          {'CLAW'.split('').map((ch, i) => (
+            <div key={i} className="text-center">
+              <span className="text-[100px] leading-none text-white" style={{ fontFamily: 'Inter', fontWeight: 900, textShadow: '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.4), 0 0 80px rgba(255,255,255,0.2)' }}>{ch}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Row 3 */}
+        <div className="grid grid-cols-4 gap-[3px]">
+          {gridItems.slice(8, 12).map(({ label, bg }, index) => (
+            <GridCell key={index + 8} index={index + 8} label={label} bg={bg} />
+          ))}
         </div>
       </div>
 
@@ -208,22 +253,39 @@ const App = () => {
         {/* Part 1 Header */}
         <div className="flex items-center mb-16">
           <div className="w-[12px] h-[64px] bg-[#FF3B00] mr-6"></div>
-          <h2 className="text-[80px] uppercase" style={typoHeroEn}>GUEST ROSTER</h2>
+          <h2 className="text-[80px] uppercase whitespace-nowrap shrink-0" style={typoHeroEn}>GUEST ROSTER</h2>
           <div className="flex-1 border-b border-dashed border-white/30 ml-8"></div>
+        </div>
+
+        <div className="text-[32px] text-[#FF3B00] mb-6" style={typoMono}>// Part 0 — 开场　09:30 - 10:00</div>
+        <div className="flex flex-col gap-4 mb-12">
+          {[
+            { name: "手工川", title: "主理人", desc: "开场致辞 · NeonClaw 是什么、为什么、怎么玩" },
+            { name: "全体", title: "破冰", desc: "「你的龙虾叫什么名字？」30秒自我介绍" },
+          ].map((guest, idx) => (
+            <div key={idx} className="flex items-start gap-6 py-5 border-b border-white/8">
+              <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 1).padStart(2, '0')}</span>
+              <span className="text-[42px] shrink-0 w-[140px] leading-tight" style={typoSubtitle}>{guest.name}</span>
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-[26px] text-[#FF3B00]" style={typoMono}>{guest.title}</span>
+                <span className="text-[28px] text-white/50 mt-1" style={typoBody}>{guest.desc}</span>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="text-[32px] text-[#FF3B00] mb-6" style={typoMono}>// Part 1 — 趋势与洞察　10:00 - 12:00</div>
         <div className="flex flex-col gap-4 mb-12">
           {[
-            { name: "手工川", title: "Lovstudio.ai 创始人 · Vibe Coding 布道者", desc: "新世界没有旧神" },
-            { name: "杨天润", title: "Naughty Labs 创始人 · NeonClaw Top贡献者", desc: "Agentic Engineering：让 Agent 自己写代码" },
             { name: "江志桐", title: "天际资本董事总经理", desc: "什么样的 AI 公司值得投？" },
             { name: "苏嘉奕", title: "MiniMax 生态合作负责人", desc: "从工具到生态：大模型平台的进化之路" },
+            { name: "手工川", title: "Lovstudio.ai 创始人 · Vibe Coding 布道者", desc: "新世界没有旧神：龙虾时代人机交互新范式" },
+            { name: "熊楚伊", title: "Veryloving.ai 创始人", desc: "当 AI 成为她的守护者" },
             { name: "黄力昂", title: "共绩科技联合创始人", desc: "龙虾距离永生还有多久？" },
             { name: "郎瀚威", title: "硅谷 AI 观察者", desc: "硅谷前线：海外龙虾生态全景扫描（线上）" }
           ].map((guest, idx) => (
             <div key={idx} className="flex items-start gap-6 py-5 border-b border-white/8">
-              <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 1).padStart(2, '0')}</span>
+              <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 3).padStart(2, '0')}</span>
               {guest.mystery ? (
                 <div className="shrink-0 w-[140px] flex justify-center">
                   <img src="/mystery-guest.png" className="w-[80px] h-[80px] rounded-full object-cover border-2 border-[#FF3B00]" style={{ mixBlendMode: 'lighten' }} />
@@ -246,7 +308,7 @@ const App = () => {
               <span className="text-[22px] text-[#FF3B00]/60 ml-2" style={typoMono}>ROUNDTABLE</span>
             </div>
             <div className="flex flex-wrap gap-3">
-              {["手工川", "杨天润", "江志桐", "苏嘉奕", "黄力昂"].map((name, i) => (
+              {["江志桐", "苏嘉奕", "手工川", "熊楚伊", "黄力昂"].map((name, i) => (
                 <span key={i} className="px-5 py-2 border border-white/15 bg-white/5 text-[24px] text-white/70" style={typoMono}>{name}</span>
               ))}
             </div>
@@ -257,14 +319,14 @@ const App = () => {
         <div className="flex flex-col gap-4">
           {[
             { name: "叶震杰", title: "ZenMux 联合创始人 · 产品负责人", desc: "小龙虾——ZenMux 的第 11 号员工" },
-            { name: "HW", title: "独立 Agent 开发者", desc: "一个人如何创建 93 个 Agent 技能？" },
+            { name: "HW", title: "独立 Agent 开发者", desc: "如何搭建一个人的 Agent 军团" },
+            { name: "杨天润", title: "Naughty Labs 创始人 · OpenClaw 生态创业者", desc: "Agentic Engineering：让 Agent 自己写代码" },
             { name: "尹子萧", title: "首序智能工程师", desc: "Agent 安全攻防：让你的龙虾刀枪不入" },
-            { name: "熊楚伊", title: "Veryloving.ai 创始人", desc: "当 AI 成为她的守护者" },
             { name: "常识", title: "Kusart 创始人", desc: "OpenClaw 企业级落地实战（线上）" },
-            { name: "张舒昱", title: "某爆火 Claw 产品负责人", desc: "线上连麦" }
+            { name: "张舒昱", title: "腾讯 QClaw 产品负责人", desc: "线上连麦" }
           ].map((guest, idx) => (
             <div key={idx} className="flex items-start gap-6 py-5 border-b border-white/8">
-              <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 7).padStart(2, '0')}</span>
+              <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 9).padStart(2, '0')}</span>
               <span className="text-[42px] shrink-0 w-[140px] leading-tight" style={typoSubtitle}>{guest.name}</span>
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="text-[26px] text-[#FF3B00]" style={typoMono}>{guest.title}</span>
@@ -281,7 +343,7 @@ const App = () => {
               <span className="text-[22px] text-[#FF3B00]/60 ml-2" style={typoMono}>ROUNDTABLE</span>
             </div>
             <div className="flex flex-wrap gap-3">
-              {["七牛云副总裁宿度", "叶震杰", "HW", "尹子萧", "熊楚伊"].map((name, i) => (
+              {["七牛云副总裁宿度", "叶震杰", "HW", "杨天润", "尹子萧"].map((name, i) => (
                 <span key={i} className="px-5 py-2 border border-white/15 bg-white/5 text-[24px] text-white/70" style={typoMono}>{name}</span>
               ))}
             </div>
@@ -354,7 +416,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 联办 ]</div>
               <div className="flex flex-wrap gap-5">
-                {['天际资本', 'WayToAGI', '开源中国', '极新', 'RTE开发者社区'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
+                {['RTE开发者社区', 'WayToAGI', '极新', '开源中国', '天际资本'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
               </div>
             </div>
 
@@ -362,7 +424,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 赞助 ]</div>
               <div className="flex flex-wrap gap-5">
-                {['东升科技园', 'AWS', '百度云', '七牛云', 'Zenmux', 'MiniMax', '智谱', 'TTC', '融科资讯中心', '昆仑巢'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
+                {['AWS', 'MiniMax', 'TTC', 'Zenmux', '百度云', '东升科技园', '昆仑巢', '七牛云', '融科资讯中心', '智谱'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
               </div>
             </div>
 
@@ -370,7 +432,7 @@ const App = () => {
             <div className="mb-12">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 合作伙伴 ]</div>
               <div className="flex flex-wrap gap-3">
-                {['AI产品榜', '阿里云', '北京大学AI创业营', '北京AI原点社区', 'CMI', 'Edge Partners', 'Evomap', '非凡产研', '硅星人', '杭州AI工坊', '阶跃星辰', '锦秋基金', 'Kimi', '蓝驰资本', 'MetaSpace', 'MoltsPay', 'OpenBuild', '苹果中国孵化器', '启师傅AI客厅', '特工宇宙', 'THUAGI', 'VibeFriends', '微软中国', 'WeOPC', '五源资本'].map((s, i) => <LogoSlot key={i} name={s} size="sm" />)}
+                {['AI产品榜', 'CMI', 'Edge Partners', 'Evomap', 'Kimi', 'MetaSpace', 'MoltsPay', 'OpenBuild', 'THUAGI', 'VibeFriends', 'Vista看天下', 'WeOPC', '阿里云', '北京AI原点社区', '北京大学AI创业营', '第一财经', '非凡产研', '杭州AI工坊', '硅星人', '阶跃星辰', '锦秋基金', '蓝驰资本', '雷锋网', '苹果中国孵化器', '启师傅AI客厅', '特工宇宙', '微软中国', '五源资本', '新智元'].map((s, i) => <LogoSlot key={i} name={s} size="sm" />)}
               </div>
             </div>
           </>;
@@ -382,39 +444,36 @@ const App = () => {
         {/* 报名信息 */}
         <div className="border border-white/10 mb-10">
           {/* 标题栏 */}
-          <div className="bg-[#FF3B00] px-10 py-5 flex items-center justify-between">
-            <span className="text-[44px] text-black font-black" style={typoHeroEn}>FREE ENTRY</span>
-            <span className="text-[28px] text-black/70" style={typoBody}>本活动完全免费 · Agent 报名优先通过</span>
+          <div className="bg-[#FF3B00] px-10 py-5 flex items-center justify-between whitespace-nowrap">
+            <span className="text-[44px] text-black font-black shrink-0" style={typoHeroEn}>FREE ENTRY</span>
+            <span className="text-[28px] text-black/70 shrink-0" style={typoBody}>本活动完全免费 · Agent 报名优先通过</span>
           </div>
 
-          <div className="p-10">
-            {/* Agent 报名方式 */}
-            <div className="flex items-center gap-8 mb-10">
-              <div className="flex-1 bg-black border border-white/15 p-6 flex items-center gap-4">
-                <span className="text-[20px] text-white/30" style={typoMono}>$</span>
-                <span className="text-[32px] text-[#FF3B00]" style={typoMono}>npx neonclaw signup</span>
+          <div className="p-8 flex gap-8">
+            {/* 左侧 2x2 grid */}
+            <div className="flex-1 grid grid-cols-2 gap-3">
+              <div className="bg-black border border-white/15 p-4 flex items-center gap-3">
+                <span className="text-[18px] text-white/30" style={typoMono}>$</span>
+                <span className="text-[22px] text-[#FF3B00]" style={typoMono}>npx neonclaw signup</span>
               </div>
-              <div className="shrink-0 text-center">
-                <div className="text-[24px] text-white/30" style={typoMono}>或访问</div>
-                <div className="text-[28px] text-white/70 mt-1" style={typoMono}>neonclaw.lovstudio.ai</div>
+              <div className="bg-white/3 border border-white/8 p-4 flex items-center">
+                <span className="text-[22px] text-white/60" style={typoMono}>neonclaw.lovstudio.ai</span>
               </div>
-            </div>
-
-            {/* 人工联系 */}
-            <div className="text-[24px] text-white/30 mb-6" style={typoMono}>// 人工通道</div>
-            <div className="flex justify-center gap-12">
               {[
-                { name: "Ariel", role: "报名 / 商务对接", wechat: "ashincherry_love" },
-                { name: "手工川", role: "统筹 / 技术对接", wechat: "youshouldspeakhow" },
-              ].map((person, i) => (
-                <div key={i} className="flex gap-5 items-center bg-white/3 border border-white/8 p-5 flex-1">
-                  <div className="flex flex-col">
-                    <span className="text-[28px] text-white/80" style={typoSubtitle}>{person.name}</span>
-                    <span className="text-[22px] text-[#FF3B00] mt-1" style={typoMono}>{person.role}</span>
-                    <span className="text-[20px] text-white/40 mt-2" style={typoMono}>微信: {person.wechat}</span>
-                  </div>
+                { name: "Ariel", role: "商务合作", wechat: "ashincherry_love" },
+                { name: "手工川", role: "技术对接", wechat: "youshouldspeakhow" },
+              ].map((p, i) => (
+                <div key={i} className="bg-white/3 border border-white/8 p-4">
+                  <span className="text-[22px] text-white/80" style={typoSubtitle}>{p.name}</span>
+                  <span className="text-[18px] text-[#FF3B00] ml-2" style={typoMono}>{p.role}</span>
+                  <div className="text-[16px] text-white/40 mt-1" style={typoMono}>{p.wechat}</div>
                 </div>
               ))}
+            </div>
+            {/* 右侧二维码 */}
+            <div className="shrink-0 flex flex-col items-center justify-center">
+              <img src="/signup-qr.png" className="w-[148px] h-[148px]" alt="报名二维码" />
+              <span className="text-[16px] text-white/40 mt-2" style={typoMono}>扫码报名</span>
             </div>
           </div>
         </div>
