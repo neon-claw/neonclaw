@@ -134,7 +134,7 @@ const App = () => {
         <div className="flex items-center space-x-6 mb-4">
           <span className="text-[36px] uppercase tracking-wider" style={typoMono}>手工川</span>
           <span className="text-[32px] text-[#FF3B00]">×</span>
-          <span className="text-[36px] tracking-wider" style={typoMono}>Naughty Labs</span>
+          <span className="text-[36px] tracking-wider" style={typoMono}>clawborn.live</span>
           <span className="text-[32px] text-[#FF3B00]">×</span>
           <span className="text-[36px] tracking-wider" style={typoMono}>清华创协</span>
         </div>
@@ -318,9 +318,9 @@ const App = () => {
         <div className="text-[32px] text-[#FF3B00] mb-6" style={typoMono}>// Part 2 — 实操与经验　14:00 - 16:00</div>
         <div className="flex flex-col gap-4">
           {[
-            { name: "叶震杰", title: "ZenMux 联合创始人 · 产品负责人", desc: "小龙虾——ZenMux 的第 11 号员工" },
+            { name: "叶震杰", title: "ZenMux.ai 联合创始人 · 产品负责人", desc: "小龙虾——ZenMux 的第 11 号员工" },
             { name: "HW", title: "独立 Agent 开发者", desc: "如何搭建一个人的 Agent 军团" },
-            { name: "杨天润", title: "Naughty Labs 创始人 · OpenClaw 生态创业者", desc: "Agentic Engineering：让 Agent 自己写代码" },
+            { name: "杨天润", title: "clawborn.live 创始人", desc: "Agentic Engineering 方法论" },
             { name: "尹子萧", title: "首序智能研发总监", desc: "Agent 安全攻防：让你的龙虾刀枪不入" },
             { name: "常识", title: "Kusart 创始人", desc: "OpenClaw 企业级落地实战（线上）" },
             { name: "张舒昱", title: "腾讯 QClaw 产品负责人", desc: "线上连麦" }
@@ -409,7 +409,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 主办 ]</div>
               <div className="flex flex-wrap gap-6">
-                {['手工川', 'Naughty Labs', '清华大学学生创业协会'].map((s, i) => <LogoSlot key={i} name={s} size="lg" />)}
+                {['手工川', 'clawborn.live', '清华大学学生创业协会'].map((s, i) => <LogoSlot key={i} name={s} size="lg" />)}
               </div>
             </div>
 
@@ -425,7 +425,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 赞助 ]</div>
               <div className="flex flex-wrap gap-5">
-                {['AWS', 'Kimi', 'MiniMax', 'Zenmux', '阿里云', '百度云', '阶跃星辰', '七牛云', '腾讯云', '智谱'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
+                {['AWS', 'Kimi', 'MiniMax', 'ZenMux', '阿里云', '百度云', '阶跃星辰', '七牛云', '腾讯云', '智谱'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
               </div>
             </div>
 

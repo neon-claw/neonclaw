@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1
+
+- 杨天润 title 改为 clawborn.live 创始人，主办方同步更新
+- 叶震杰 title 加 ZenMux.ai
+- 杨天润分享主题改为 Agentic Engineering 方法论
+- 合作伙伴新增小红书、CreekStone
+
 ## 1.0.0
 
 - 品牌从 NeonClaw 改为 OpenClaw（游戏部分保留 NeonClaw Game）
