@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Layout } from './components/Layout.jsx'
 import { supabase } from './signup/supabase.js'
+import { CAPACITY, VENUE } from './constants.js'
 
 const useSignups = () => {
   const [count, setCount] = useState(null)
@@ -59,7 +60,6 @@ const schedule = [
 
 const LandingPage = () => {
   const { count: signupCount, members } = useSignups()
-  const CAPACITY = 200
 
   return (
   <Layout>
@@ -93,7 +93,7 @@ const LandingPage = () => {
         </div>
 
         <div className="flex flex-wrap justify-center gap-6 text-sm text-white/50 mb-2" style={{ fontFamily: 'Anonymous Pro' }}>
-          <span><i className="fa-solid fa-location-dot mr-1.5 text-[#FF3B00]" />北京海淀 · 中关村科技园</span>
+          <span><i className="fa-solid fa-location-dot mr-1.5 text-[#FF3B00]" />{VENUE}</span>
           <span><i className="fa-solid fa-clock mr-1.5 text-[#FF3B00]" />09:30 - 18:00</span>
           <span><i className="fa-solid fa-users mr-1.5 text-[#FF3B00]" />{signupCount !== null ? <>{signupCount} / {CAPACITY} 人已报名</> : <>限 {CAPACITY} 人</>}</span>
         </div>

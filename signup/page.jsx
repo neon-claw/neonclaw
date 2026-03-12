@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { supabase } from './supabase.js'
 import { Layout } from '../components/Layout.jsx'
+import { CAPACITY, VENUE } from '../constants.js'
 
 const ROLES = ['开发者', '创业者', '投资人', '学生', '其他']
 
@@ -50,9 +51,9 @@ const SignupPage = () => {
             AI Meetup
           </h2>
           <div className="flex flex-wrap justify-center gap-4 text-sm text-white/60" style={{ fontFamily: 'Anonymous Pro' }}>
-            <span><i className="fa-solid fa-location-dot mr-1.5 text-[#FF3B00]" />北京海淀 · 中关村科技园</span>
+            <span><i className="fa-solid fa-location-dot mr-1.5 text-[#FF3B00]" />{VENUE}</span>
             <span><i className="fa-solid fa-clock mr-1.5 text-[#FF3B00]" />19:00 - 22:00</span>
-            <span><i className="fa-solid fa-users mr-1.5 text-[#FF3B00]" />限 150 人</span>
+            <span><i className="fa-solid fa-users mr-1.5 text-[#FF3B00]" />{`限 ${CAPACITY} 人`}</span>
           </div>
         </div>
       </section>

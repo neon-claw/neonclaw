@@ -3,12 +3,14 @@ import React, { useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { domToJpeg } from 'modern-screenshot';
 import { Layout } from './components/Layout.jsx';
+import { CAPACITY, VENUE } from './constants.js';
 
 const btnClass = "px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs rounded-md border border-white/20 cursor-pointer transition-colors disabled:opacity-50";
 
 const useToolbar = (targetRef) => {
   const [copyStatus, setCopyStatus] = useState('idle');
   const [dlStatus, setDlStatus] = useState('idle');
+  const [sliceStatus, setSliceStatus] = useState('idle');
 
   const generate = async () => {
     const el = targetRef.current;
@@ -63,12 +65,54 @@ const useToolbar = (targetRef) => {
     setDlStatus('idle');
   };
 
+  const handleDownloadSlices = async () => {
+    setSliceStatus('generating');
+    try {
+      const dataUrl = await generate();
+      if (!dataUrl) return;
+      const el = targetRef.current;
+      const sections = el.querySelectorAll('[data-section]');
+      if (!sections.length) return;
+
+      const scale = 3;
+      const width = el.offsetWidth * scale;
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+
+      for (let i = 0; i < sections.length; i++) {
+        const top = sections[i].offsetTop * scale;
+        const bottom = i < sections.length - 1
+          ? sections[i + 1].offsetTop * scale
+          : img.height;
+        const height = bottom - top;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, top, width, height, 0, 0, width, height);
+
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `openclaw-poster-${i + 1}.jpg`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setSliceStatus('idle');
+  };
+
   const copyLabel = { idle: '复制', copying: '生成中...', done: '已复制!', error: '失败' }[copyStatus];
 
   return (
     <>
       <button onClick={handleCopy} disabled={copyStatus === 'copying'} className={btnClass}>{copyLabel}</button>
       <button onClick={handleDownload} disabled={dlStatus === 'generating'} className={btnClass}>{dlStatus === 'generating' ? '生成中...' : '下载'}</button>
+      <button onClick={handleDownloadSlices} disabled={sliceStatus === 'generating'} className={btnClass}>{sliceStatus === 'generating' ? '切割中...' : '导出分图'}</button>
     </>
   );
 };
@@ -77,7 +121,6 @@ const App = () => {
   const posterRef = useRef(null);
   const toolbarActions = useToolbar(posterRef);
   // Typography Tokens based on constraints
-  const CAPACITY = 100;
   const typoHeroEn = { fontFamily: 'Inter', fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 };
   const typoHeroZh = { fontFamily: 'OPPO Sans 4.0', fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 };
   const typoSubtitle = { fontFamily: 'OPPO Sans 4.0', fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1.2 };
@@ -128,7 +171,7 @@ const App = () => {
            style={{ backgroundImage: 'radial-gradient(circle, #333 2px, transparent 2px)', backgroundSize: '40px 40px' }}></div>
 
       {/* ================= SECTION 1: HERO (0 - 900px) ================= */}
-      <div className="relative pt-[50px] px-[60px] flex flex-col z-10">
+      <div data-section="hero" className="relative pt-[50px] px-[60px] flex flex-col z-10">
 
         {/* Top Header */}
         <div className="flex items-center space-x-6 mb-4">
@@ -173,7 +216,8 @@ const App = () => {
             <div className="w-[3px] h-[48px] bg-white/30"></div>
             <div className="flex flex-col">
               <span className="text-[32px] text-white/80" style={typoMono}>SAT 9:30 — 18:00</span>
-              <span className="text-[32px] text-white/50" style={typoMono}>北京海淀 · 中关村科技园</span>
+              <span className="text-[32px] text-white/50" style={typoMono}>{VENUE}</span>
+              <span className="text-[20px] text-white/30 mt-1" style={typoMono}>具体地址报名审核通过后通知</span>
             </div>
             <div className="ml-auto flex items-baseline gap-1">
               <span className="text-[28px] text-white/40" style={typoMono}>限</span>
@@ -184,9 +228,9 @@ const App = () => {
           <div className="flex items-center justify-between mt-5" style={typoMono}>
             {[
               { time: "09:30", label: "签到" },
-              { time: "09:45", label: "开场" },
               { time: "10:00", label: "主题演讲" },
               { time: "12:00", label: "午休" },
+              { time: "13:45", label: "签到" },
               { time: "14:00", label: "实战分享" },
               { time: "16:00", label: "Game!" },
               { time: "18:00", label: "Ending" },
@@ -204,8 +248,8 @@ const App = () => {
       </div>
 
 
-      {/* ================= SECTION 2: THE ABSTRACT GRID (900 - 1800px) ================= */}
-      <div className="relative mt-[120px] px-[40px] z-10">
+      {/* ================= SECTION 2: THE ABSTRACT GRID ================= */}
+      <div data-section="grid" className="relative mt-[120px] px-[40px] z-10">
         {/* Row 1 */}
         <div className="grid grid-cols-4 gap-[3px]">
           {gridItems.slice(0, 4).map(({ label, bg }, index) => (
@@ -217,7 +261,7 @@ const App = () => {
         <div className="grid grid-cols-4 gap-[3px] py-2">
           {'OPEN'.split('').map((ch, i) => (
             <div key={i} className="text-center">
-              <span className="text-[100px] leading-none text-white" style={{ fontFamily: 'Inter', fontWeight: 900, textShadow: '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.4), 0 0 80px rgba(255,255,255,0.2)' }}>{ch}</span>
+              <span className="text-[100px] leading-none text-white" style={{ fontFamily: 'Inter', fontWeight: 900, textShadow: '0 0 12px rgba(255,255,255,0.3), 0 0 30px rgba(255,255,255,0.15)' }}>{ch}</span>
             </div>
           ))}
         </div>
@@ -233,7 +277,7 @@ const App = () => {
         <div className="grid grid-cols-4 gap-[3px] py-2">
           {'CLAW'.split('').map((ch, i) => (
             <div key={i} className="text-center">
-              <span className="text-[100px] leading-none text-white" style={{ fontFamily: 'Inter', fontWeight: 900, textShadow: '0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.4), 0 0 80px rgba(255,255,255,0.2)' }}>{ch}</span>
+              <span className="text-[100px] leading-none text-white" style={{ fontFamily: 'Inter', fontWeight: 900, textShadow: '0 0 12px rgba(255,255,255,0.3), 0 0 30px rgba(255,255,255,0.15)' }}>{ch}</span>
             </div>
           ))}
         </div>
@@ -246,11 +290,8 @@ const App = () => {
         </div>
       </div>
 
-
-
-
-      {/* ================= SECTION 4: GUEST ROSTER (2400 - 3400px) ================= */}
-      <div className="relative mt-[160px] px-[60px] z-10">
+      {/* ================= SECTION 3: GUEST ROSTER Part 0+1 ================= */}
+      <div data-section="guest-01" className="relative mt-[160px] px-[60px] z-10">
         {/* Part 1 Header */}
         <div className="flex items-center mb-16">
           <div className="w-[12px] h-[64px] bg-[#FF3B00] mr-6"></div>
@@ -265,7 +306,7 @@ const App = () => {
           ].map((guest, idx) => (
             <div key={idx} className="flex items-start gap-6 py-5 border-b border-white/8">
               <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 1).padStart(2, '0')}</span>
-              <span className="text-[42px] shrink-0 w-[140px] leading-tight" style={typoSubtitle}>{guest.name}</span>
+              <span className="text-[42px] shrink-0 w-[140px] leading-tight flex justify-between whitespace-nowrap" style={typoSubtitle}>{guest.name.split('').map((ch, i) => <span key={i}>{ch}</span>)}</span>
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="text-[26px] text-[#FF3B00]" style={typoMono}>{guest.title}</span>
                 <span className="text-[28px] text-white/50 mt-1" style={typoBody}>{guest.desc}</span>
@@ -278,11 +319,11 @@ const App = () => {
         <div className="flex flex-col gap-4 mb-12">
           {[
             { name: "江志桐", title: "天际资本董事总经理", desc: "什么样的 AI 公司值得投？" },
-            { name: "苏嘉奕", title: "MiniMax 生态合作负责人", desc: "从工具到生态：大模型平台的进化之路" },
-            { name: "手工川", title: "Lovstudio.ai 创始人 · Vibe Coding 布道者", desc: "新世界没有旧神：龙虾时代人机交互新范式" },
-            { name: "熊楚伊", title: "Veryloving.ai 创始人", desc: "当 AI 成为她的守护者" },
+            { name: "手工川", title: "Lovstudio.ai 创始人 · Vibe Coding 布道师", desc: "新世界没有旧神：龙虾时代人机交互新范式" },
             { name: "黄力昂", title: "共绩科技联合创始人", desc: "龙虾距离永生还有多久？" },
-            { name: "郎瀚威", title: "硅谷 AI 观察者", desc: "硅谷前线：海外龙虾生态全景扫描（线上）" }
+            { name: "熊楚伊", title: "Veryloving.ai 创始人", desc: "当 AI 成为她的守护者" },
+            { name: "苏嘉奕", title: "MiniMax 生态合作负责人", desc: "从工具到生态：大模型平台的进化之路" },
+            { name: "郎瀚威", title: "推特大V · 硅谷 AI 行业分析师 / 增长顾问", desc: "硅谷前线：海外龙虾生态全景扫描（线上）" }
           ].map((guest, idx) => (
             <div key={idx} className="flex items-start gap-6 py-5 border-b border-white/8">
               <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 2).padStart(2, '0')}</span>
@@ -291,7 +332,7 @@ const App = () => {
                   <img src="/mystery-guest.png" className="w-[80px] h-[80px] rounded-full object-cover border-2 border-[#FF3B00]" style={{ mixBlendMode: 'lighten' }} />
                 </div>
               ) : (
-                <span className="text-[42px] shrink-0 w-[140px] leading-tight" style={typoSubtitle}>{guest.name}</span>
+                <span className="text-[42px] shrink-0 w-[140px] leading-tight flex justify-between whitespace-nowrap" style={typoSubtitle}>{guest.name.split('').map((ch, i) => <span key={i}>{ch}</span>)}</span>
               )}
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="text-[26px] text-[#FF3B00]" style={typoMono}>{guest.title}</span>
@@ -304,17 +345,21 @@ const App = () => {
           <div className="mt-8 border border-[#FF3B00]/30 bg-gradient-to-r from-[#FF3B00]/8 to-transparent p-8">
             <div className="flex items-center gap-4 mb-5">
               <div className="w-[4px] h-[36px] bg-[#FF3B00]"></div>
-              <span className="text-[32px] text-white/90" style={typoSubtitle}>圆桌论坛</span>
+              <span className="text-[32px] text-white/90" style={typoSubtitle}>圆桌论坛（一）</span>
               <span className="text-[22px] text-[#FF3B00]/60 ml-2" style={typoMono}>ROUNDTABLE</span>
             </div>
-            <div className="flex flex-wrap gap-3">
-              {["江志桐", "苏嘉奕", "手工川", "熊楚伊", "黄力昂"].map((name, i) => (
-                <span key={i} className="px-5 py-2 border border-white/15 bg-white/5 text-[24px] text-white/70" style={typoMono}>{name}</span>
+            <div className="flex justify-between">
+              {["江志桐", "手工川", "黄力昂", "熊楚伊", "苏嘉奕"].map((name, i) => (
+                <span key={i} className="px-5 py-2 border border-white/15 bg-white/5 text-[24px] text-white/70 whitespace-nowrap shrink-0" style={typoMono}>{name}</span>
               ))}
             </div>
           </div>
         </div>
 
+      </div>
+
+      {/* ================= SECTION 4: GUEST ROSTER Part 2 ================= */}
+      <div data-section="guest-2" className="relative mt-[60px] px-[60px] z-10">
         <div className="text-[32px] text-[#FF3B00] mb-6" style={typoMono}>// Part 2 — 实操与经验　14:00 - 16:00</div>
         <div className="flex flex-col gap-4">
           {[
@@ -327,7 +372,7 @@ const App = () => {
           ].map((guest, idx) => (
             <div key={idx} className="flex items-start gap-6 py-5 border-b border-white/8">
               <span className="text-[24px] text-white/20 pt-2 w-[48px] shrink-0" style={typoMono}>{String(idx + 8).padStart(2, '0')}</span>
-              <span className="text-[42px] shrink-0 w-[140px] leading-tight" style={typoSubtitle}>{guest.name}</span>
+              <span className="text-[42px] shrink-0 w-[140px] leading-tight flex justify-between whitespace-nowrap" style={typoSubtitle}>{guest.name.split('').map((ch, i) => <span key={i}>{ch}</span>)}</span>
               <div className="flex flex-col flex-1 min-w-0">
                 <span className="text-[26px] text-[#FF3B00]" style={typoMono}>{guest.title}</span>
                 <span className="text-[28px] text-white/50 mt-1" style={typoBody}>{guest.desc}</span>
@@ -339,12 +384,12 @@ const App = () => {
           <div className="mt-8 border border-[#FF3B00]/30 bg-gradient-to-r from-[#FF3B00]/8 to-transparent p-8">
             <div className="flex items-center gap-4 mb-5">
               <div className="w-[4px] h-[36px] bg-[#FF3B00]"></div>
-              <span className="text-[32px] text-white/90" style={typoSubtitle}>圆桌论坛</span>
+              <span className="text-[32px] text-white/90" style={typoSubtitle}>圆桌论坛（二）</span>
               <span className="text-[22px] text-[#FF3B00]/60 ml-2" style={typoMono}>ROUNDTABLE</span>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex justify-between">
               {["七牛云副总裁宿度", "叶震杰", "HW", "杨天润", "尹子萧"].map((name, i) => (
-                <span key={i} className="px-5 py-2 border border-white/15 bg-white/5 text-[24px] text-white/70" style={typoMono}>{name}</span>
+                <span key={i} className="px-5 py-2 border border-white/15 bg-white/5 text-[24px] text-white/70 whitespace-nowrap shrink-0" style={typoMono}>{name}</span>
               ))}
             </div>
           </div>
@@ -352,8 +397,8 @@ const App = () => {
       </div>
 
 
-      {/* ================= SECTION 5: MMOAS GAMEPLAY (3000 - 3400px) ================= */}
-      <div className="relative mt-[160px] px-[60px] z-10">
+      {/* ================= SECTION 5: MMOAS GAMEPLAY ================= */}
+      <div data-section="neonclaw" className="relative mt-[160px] px-[60px] z-10">
         <div className="text-center mb-16">
           <div className="text-[32px] text-[#FF3B00] mb-4" style={typoMono}>16:00 - 18:00 &gt; INITIATE</div>
           <h2 className="text-[80px]" style={typoHeroEn}>NEONCLAW GAME</h2>
@@ -385,7 +430,7 @@ const App = () => {
 
 
       {/* ================= SECTION 6: SPONSORS & FOOTER ================= */}
-      <div className="relative mt-[120px] px-[60px] z-10">
+      <div data-section="partners" className="relative mt-[120px] px-[60px] z-10">
 
         {/* Section header */}
         <div className="flex items-center mb-12">
@@ -409,7 +454,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 主办 ]</div>
               <div className="flex flex-wrap gap-6">
-                {['手工川', 'clawborn.live', '清华大学学生创业协会'].map((s, i) => <LogoSlot key={i} name={s} size="lg" />)}
+                {['手工川', 'clawborn.live', '清华大学学生创业协会', '中关村科学城·东升科技园'].map((s, i) => <LogoSlot key={i} name={s} size="lg" />)}
               </div>
             </div>
 
@@ -417,7 +462,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 联办 ]</div>
               <div className="flex flex-wrap gap-5">
-                {['RTE开发者社区', 'WayToAGI', '极新', '开源中国', '天际资本', '中关村科学城·东升科技园'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
+                {['OpenBMB', 'OpenBuild', 'RTE开发者社区', 'WayToAGI', '极新', '开源中国', '开源社', '天际资本'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
               </div>
             </div>
 
@@ -425,7 +470,7 @@ const App = () => {
             <div className="mb-10">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 赞助 ]</div>
               <div className="flex flex-wrap gap-5">
-                {['AWS', 'Kimi', 'MiniMax', 'ZenMux', '阿里云', '百度云', '阶跃星辰', '七牛云', '腾讯云', '智谱'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
+                {['AWS', 'Kimi', 'MiniMax', 'ZenMux', '阿里云', '百度智能云', '阶跃星辰', '七牛云', '腾讯云', '智谱'].map((s, i) => <LogoSlot key={i} name={s} size="md" />)}
               </div>
             </div>
 
@@ -433,7 +478,7 @@ const App = () => {
             <div className="mb-12">
               <div className="text-[24px] text-[#FF3B00] mb-4" style={typoMono}>[ 合作伙伴 ]</div>
               <div className="flex flex-wrap gap-3">
-                {['AI产品榜', 'ChainFeeds Limited', 'CMI', 'CreekStone', 'Edge Partners', 'Evomap', 'Lovgevity', 'MetaSpace', 'MoltsPay', 'OpenBuild', 'THUAGI', 'TTC', 'VibeFriends', 'Vista看天下', 'WeOPC', 'AI原点学堂', '北京大学AI创业营', '第一财经', '非凡产研', '杭州AI工坊', '硅星人', '锦秋基金', '昆仑巢', '蓝驰资本', '雷锋网', '苹果中国孵化器', '启师傅AI客厅', '融科资讯中心', '特工宇宙', '未名融智', '微软中国', '五源资本', '小红书', '新智元', '原点跃界'].map((s, i) => <LogoSlot key={i} name={s} size="sm" />)}
+                {['AI产品榜', 'AI原点学堂', '北京大学AI创业营', '北京大学学生创业圈', 'ChainFeeds Limited', 'CMI', 'CreekStone', 'CSDN', '第一财经', 'Edge Partners', 'Evomap', '非凡产研', '杭州AI工坊', '硅星人', '锦秋基金', '昆仑巢', '蓝驰资本', '雷锋网', 'Lovgevity', 'MetaSpace', 'MoltsPay', '苹果中国孵化器', '启师傅AI客厅', '融科资讯中心', '特工宇宙', 'THUAGI', 'TTC', 'VibeFriends', 'Vista看天下', '未名融智', '微软中国', 'WeOPC', '五源资本', '小红书', '新智元', '原点跃界'].map((s, i) => <LogoSlot key={i} name={s} size="sm" />)}
               </div>
             </div>
           </>;
@@ -447,34 +492,37 @@ const App = () => {
           {/* 标题栏 */}
           <div className="bg-[#FF3B00] px-10 py-5 flex items-center justify-between whitespace-nowrap">
             <span className="text-[44px] text-black font-black shrink-0" style={typoHeroEn}>FREE ENTRY</span>
-            <span className="text-[28px] text-black/70 shrink-0" style={typoBody}>{`免费 · 限${CAPACITY}人 · Agent 报名优先通过`}</span>
+            <span className="text-[28px] text-black/70 shrink-0" style={typoBody}>{`免费 · 限${CAPACITY}人 · 报名审核制`}</span>
           </div>
 
-          <div className="p-8 flex gap-8">
-            {/* 左侧 2x2 grid */}
-            <div className="flex-1 grid grid-cols-2 gap-3">
-              <div className="bg-white/3 border border-white/8 p-4 flex items-center">
-                <span className="text-[20px] text-white/50" style={typoBody}>让你的 Agent 帮你报名 →</span>
+          <div className="p-10 flex gap-10 items-center">
+            {/* 左侧：npx + 联系人 */}
+            <div className="flex-1 flex flex-col gap-5">
+              <div className="bg-black border border-white/15 px-6 py-4 flex items-center gap-3">
+                <span className="text-[20px] text-white/30" style={typoMono}>$</span>
+                <span className="text-[26px] text-[#FF3B00]" style={typoMono}>npx clawborn signup</span>
+                <span className="text-[16px] text-[#FF3B00] ml-auto whitespace-nowrap" style={typoMono}>Agent 报名优先通过</span>
               </div>
-              <div className="bg-black border border-white/15 p-4 flex items-center gap-3">
-                <span className="text-[18px] text-white/30" style={typoMono}>$</span>
-                <span className="text-[22px] text-[#FF3B00]" style={typoMono}>npx clawborn signup</span>
+              <div className="flex justify-between">
+                {[
+                  { role: "活动咨询", name: "张铮", contact: "z3827555z" },
+                  { role: "技术咨询", name: "南川", contact: "youshouldspeakhow" },
+                  { role: "商务咨询", name: "Ariel", contact: "ashincherry_love" },
+                  { role: "场地咨询", name: "李陶然", contact: "13810628027" },
+                ].map((p, i) => (
+                  <div key={i} className="flex flex-col items-center">
+                    <span className="text-[16px] text-[#FF3B00]/50" style={typoMono}>{p.role}</span>
+                    <span className="text-[20px] text-white/60 mt-1 whitespace-nowrap" style={typoSubtitle}>{p.name}</span>
+                    {p.alias && <span className="text-[13px] text-white/30" style={typoMono}>{p.alias}</span>}
+                    <span className="text-[13px] text-white/60 mt-0.5" style={typoMono}>{p.contact}</span>
+                  </div>
+                ))}
               </div>
-              {[
-                { name: "Ariel", role: "商务合作", wechat: "ashincherry_love" },
-                { name: "手工川", role: "技术对接", wechat: "youshouldspeakhow" },
-              ].map((p, i) => (
-                <div key={i} className="bg-white/3 border border-white/8 p-4">
-                  <span className="text-[22px] text-white/80" style={typoSubtitle}>{p.name}</span>
-                  <span className="text-[18px] text-[#FF3B00] ml-2" style={typoMono}>{p.role}</span>
-                  <div className="text-[16px] text-white/40 mt-1" style={typoMono}>{p.wechat}</div>
-                </div>
-              ))}
             </div>
-            {/* 右侧二维码 */}
-            <div className="shrink-0 flex flex-col items-center justify-center">
-              <img src="/signup-qr.png" className="w-[148px] h-[148px]" alt="报名二维码" />
-              <span className="text-[16px] text-white/40 mt-2" style={typoMono}>扫码报名</span>
+            {/* 右侧：二维码 */}
+            <div className="shrink-0 flex flex-col items-center">
+              <img src="/signup-qr.png" className="w-[136px] h-[136px]" alt="报名二维码" />
+              <span className="text-[14px] text-white/30 mt-2 whitespace-nowrap" style={typoMono}>扫码报名</span>
             </div>
           </div>
         </div>
