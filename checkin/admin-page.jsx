@@ -77,11 +77,11 @@ const AdminPage = () => {
                         title={s.name}
                         className={`w-5 h-5 rounded text-[10px] flex items-center justify-center ${
                           u.spots.has(s.id)
-                            ? 'bg-[#FF3B00]/30 text-[#FF3B00]'
+                            ? 'bg-[#FF3B00]/30'
                             : 'bg-white/5 text-white/20'
                         }`}
                       >
-                        {s.id}
+                        {u.spots.has(s.id) ? '🦞' : '·'}
                       </span>
                     ))}
                   </div>

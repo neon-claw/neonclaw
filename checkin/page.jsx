@@ -2,13 +2,13 @@ import '../app.css'
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Layout } from '../components/Layout.jsx'
-import { SPOTS, TOTAL_SPOTS } from './spots.js'
+import { SPOTS, SPOT_MAP, TOTAL_SPOTS } from './spots.js'
 import { useCheckin } from './use-checkin.js'
 
 const CheckinPage = () => {
   const params = new URLSearchParams(window.location.search)
-  const spotId = parseInt(params.get('spot'), 10)
-  const spot = SPOTS.find(s => s.id === spotId)
+  const spotCode = params.get('spot')
+  const spot = spotCode ? SPOT_MAP[spotCode] : null
 
   const { user, checkins, loading, register, doCheckin } = useCheckin()
   const [nickname, setNickname] = useState('')
@@ -33,7 +33,7 @@ const CheckinPage = () => {
     const { error } = await supabase
       .from('neonclaw_checkins')
       .upsert(
-        { user_id: u.id, nickname: u.nickname, spot_id: spotId },
+        { user_id: u.id, nickname: u.nickname, spot_id: spotCode },
         { onConflict: 'user_id,spot_id' }
       )
     return { error: error?.message }
@@ -41,7 +41,7 @@ const CheckinPage = () => {
 
   useEffect(() => {
     if (user && spot && !checkinDone) {
-      doCheckin(spotId).then(({ error: err }) => {
+      doCheckin(spotCode).then(({ error: err }) => {
         if (err) setError(err)
         else setCheckinDone(true)
       })
@@ -51,12 +51,18 @@ const CheckinPage = () => {
   return (
     <Layout>
       <div className="max-w-md mx-auto px-4 py-8">
-        {/* Checkin result */}
+        {spotCode && !spot && (
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-4">🚫</div>
+            <p className="text-red-400">无效的打卡码</p>
+          </div>
+        )}
+
         {spot && (
           <div className="mb-8 text-center">
             {!user ? (
               <form onSubmit={handleRegisterAndCheckin} className="space-y-4">
-                <div className="text-5xl mb-4">📍</div>
+                <div className="text-5xl mb-4">🦞</div>
                 <h2 className="text-xl font-bold">{spot.name}</h2>
                 <p className="text-white/50 text-sm">首次打卡，请输入你的昵称</p>
                 <input
@@ -91,7 +97,7 @@ const CheckinPage = () => {
           </div>
         )}
 
-        {!spot && !params.get('spot') && (
+        {!spotCode && (
           <div className="text-center mb-8">
             <h1 className="text-2xl font-black mb-2">
               <span className="text-[#FF3B00]">Neon</span>Claw 打卡集章
@@ -100,9 +106,6 @@ const CheckinPage = () => {
           </div>
         )}
 
-        {spot && !user && null}
-
-        {/* Progress grid */}
         {user && (
           <>
             <div className="flex items-center justify-between mb-4">
@@ -129,7 +132,7 @@ const CheckinPage = () => {
                         : 'bg-white/5 border-white/10 text-white/30'
                     }`}
                   >
-                    <div className="text-2xl mb-1">{checked ? '✅' : '❓'}</div>
+                    <div className="text-2xl mb-1">{checked ? '🦞' : '❓'}</div>
                     <div className="text-xs">{s.name}</div>
                   </div>
                 )

@@ -7,6 +7,7 @@ const navLinks = [
   { label: '审批', href: '/review/' },
   { label: '打卡', href: '/checkin/' },
   { label: '排行', href: '/checkin/admin.html' },
+  { label: '二维码', href: '/checkin/qrcodes.html' },
 ]
 
 export const Layout = ({ children, actions }) => (
