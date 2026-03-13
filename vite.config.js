@@ -45,6 +45,7 @@ export default defineConfig({
   plugins: [lovinspPlugin({ bundler: 'vite' }), react(), tailwindcss(), reviewPersistPlugin()],
   server: {
     port: 5199,
+    host: true,
     watch: { ignored: ['**/review-data.json'] },
   },
   build: {
@@ -54,6 +55,9 @@ export default defineConfig({
         poster: resolve(__dirname, 'poster/index.html'),
         signup: resolve(__dirname, 'signup/index.html'),
         review: resolve(__dirname, 'review/index.html'),
+        checkin: resolve(__dirname, 'checkin/index.html'),
+        checkinAdmin: resolve(__dirname, 'checkin/admin.html'),
+        checkinQrcodes: resolve(__dirname, 'checkin/qrcodes.html'),
       },
     },
   },
