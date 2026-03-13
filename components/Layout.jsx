@@ -4,6 +4,7 @@ const navLinks = [
   { label: '首页', href: '/' },
   { label: '海报', href: '/poster/' },
   { label: '报名', href: '/signup/' },
+  { label: '审批', href: '/review/' },
 ]
 
 export const Layout = ({ children, actions }) => (
