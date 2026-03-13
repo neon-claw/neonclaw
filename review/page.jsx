@@ -412,9 +412,9 @@ const App = () => {
   }
 
   const total = filteredRecords.length
-  const approved = Object.values(results).filter(v => v === 'approved').length
-  const rejected = Object.values(results).filter(v => v === 'rejected').length
-  const skipped = Object.values(results).filter(v => v === 'skipped').length
+  const approved = filteredRecords.filter(r => results[r.id] === 'approved').length
+  const rejected = filteredRecords.filter(r => results[r.id] === 'rejected').length
+  const skipped = filteredRecords.filter(r => results[r.id] === 'skipped').length
   const reviewed = approved + rejected + skipped
   const scored = Object.keys(aiScores).length
   const bookmarked = Object.keys(bookmarks).length
@@ -458,7 +458,7 @@ const App = () => {
   const searchMatches = searchQuery
     ? records.reduce((acc, r, i) => {
         const q = searchQuery.toLowerCase()
-        const hay = `${r.name} ${r.org} ${r.dept} ${r.role} ${r.intro} ${r.agentDesc}`.toLowerCase()
+        const hay = `${r.name} ${r.org} ${r.dept} ${r.role} ${r.intro} ${r.agentDesc} ${r.phone} ${r.wechat}`.toLowerCase()
         if (hay.includes(q)) acc.push(i)
         return acc
       }, [])
