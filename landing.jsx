@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client'
 import { Layout } from './components/Layout.jsx'
 import { supabase } from './signup/supabase.js'
 import { CAPACITY, VENUE } from './constants.js'
+import feishuSignups from './feishu-signups.json'
 
 const useSignups = () => {
   const [count, setCount] = useState(null)
@@ -31,7 +32,7 @@ const useSignups = () => {
 
 const speakers = [
   { name: '手工川', title: 'Lovstudio.ai 创始人 · Vibe Coding 布道者', topic: '新世界没有旧神' },
-  { name: '杨天润', title: 'Naughty Labs 创始人 · OpenClaw Top贡献者', topic: 'Agentic Engineering：让 Agent 自己写代码' },
+  { name: '杨天润', title: 'clawborn.live 创始人 · OpenClaw Top贡献者', topic: 'Agentic Engineering：让 Agent 自己写代码' },
   { name: 'Clara', title: '天际资本董事总经理', topic: '寻找 AI 原生的产品和公司' },
   { name: '苏嘉奕', title: 'MiniMax 生态合作负责人', topic: '从工具到生态：OpenClaw 的商业化进化与未来' },
   { name: '黄力昂', title: '共绩科技联合创始人', topic: '龙虾距离永生还有多久？' },
@@ -58,6 +59,66 @@ const schedule = [
   { time: '17:40', label: '成果展示 & 颁奖', section: null },
 ]
 
+const MemberTag = ({ name, role, intro }) => (
+  <div className="group relative px-3 py-1.5 border border-white/10 rounded-md bg-white/[0.02] hover:border-[#FF3B00]/30 hover:bg-[#FF3B00]/5 transition-colors">
+    <span className="text-sm text-white/70 group-hover:text-white transition-colors">{name}</span>
+    {role && <span className="text-xs text-white/25 ml-1.5" style={{ fontFamily: 'Anonymous Pro' }}>{role}</span>}
+    {intro && (
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-black border border-white/10 rounded-lg text-xs text-white/60 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+        {intro}
+      </div>
+    )}
+  </div>
+)
+
+const TABS = [
+  { key: 'feishu', label: '飞书问卷', icon: 'fa-clipboard-list' },
+  { key: 'agent', label: 'Agent 报名', icon: 'fa-robot' },
+]
+
+const MembersSection = ({ agentMembers }) => {
+  const [tab, setTab] = useState('feishu')
+  const totalCount = feishuSignups.length + agentMembers.length
+
+  if (totalCount === 0) return null
+
+  const currentList = tab === 'agent' ? agentMembers : feishuSignups
+
+  return (
+    <section className="max-w-4xl mx-auto px-6 pb-16">
+      <h2 className="text-2xl font-bold mb-6 text-center" style={{ fontFamily: 'Inter' }}>
+        <span className="text-[#FF3B00]">/</span> 已报名
+        <span className="text-sm font-normal text-white/30 ml-3" style={{ fontFamily: 'Anonymous Pro' }}>{totalCount} registered</span>
+      </h2>
+      <div className="flex justify-center gap-2 mb-6">
+        {TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-1.5 text-sm rounded-md border transition-colors ${
+              tab === t.key
+                ? 'border-[#FF3B00]/50 bg-[#FF3B00]/10 text-[#FF3B00]'
+                : 'border-white/10 text-white/40 hover:text-white/60'
+            }`}
+            style={{ fontFamily: 'Anonymous Pro' }}
+          >
+            <i className={`fa-solid ${t.icon} mr-1.5`} />
+            {t.label}
+            <span className="ml-1.5 text-xs opacity-60">
+              {t.key === 'agent' ? agentMembers.length : feishuSignups.length}
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2 justify-center">
+        {currentList.map((m, i) => (
+          <MemberTag key={i} name={m.name} role={m.role || m.org} intro={m.intro} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 const LandingPage = () => {
   const { count: signupCount, members } = useSignups()
 
@@ -80,7 +141,7 @@ const LandingPage = () => {
         </h2>
         <p className="text-xl text-white/60 mb-4 max-w-xl mx-auto leading-relaxed">
           当 <span className="text-white/90">OpenClaw</span> 的开源生态遇上 <span className="text-white/90">EVA</span> 的自进化架构，<br/>
-          200 只龙虾接入同一个沙盒世界，探索 Agent 文明的可能性。
+          {CAPACITY} 只龙虾接入同一个沙盒世界，探索 Agent 文明的可能性。
         </p>
 
         {/* Formula */}
@@ -150,7 +211,7 @@ const LandingPage = () => {
       <div className="grid md:grid-cols-3 gap-4">
         {[
           { icon: 'fa-microphone', title: '趋势 + 实战', desc: '上午看方向：AI 原生产品、龙虾生态、投资风向。下午拼手速：Agentic Engineering、安全攻防、企业落地。' },
-          { icon: 'fa-gamepad', title: 'NeonClaw Game', desc: '200 只龙虾接入同一个沙盒。从 Solo 觉醒到 Squad 结盟，最终见证 Civilization 涌现。' },
+          { icon: 'fa-gamepad', title: 'NeonClaw Game', desc: `${CAPACITY} 只龙虾接入同一个沙盒。从 Solo 觉醒到 Squad 结盟，最终见证 Civilization 涌现。` },
           { icon: 'fa-screwdriver-wrench', title: 'OpenClaw 装机区', desc: '全程开放。工程师一对一指导装机，让你的龙虾当场跑起来。' },
         ].map(({ icon, title, desc }) => (
           <div key={title} className="border border-white/10 rounded-xl p-5 bg-white/[0.02]">
@@ -167,6 +228,9 @@ const LandingPage = () => {
       <h2 className="text-2xl font-bold mb-10 text-center" style={{ fontFamily: 'Inter' }}>
         <span className="text-[#FF3B00]">/</span> 嘉宾阵容
       </h2>
+      <div className="mb-8 rounded-xl overflow-hidden border border-white/10">
+        <img src="/speakers-group.png" alt="嘉宾群照" className="w-full" />
+      </div>
       <div className="grid md:grid-cols-2 gap-0 border border-white/10">
         {speakers.map((s, i) => (
           <div
@@ -214,30 +278,7 @@ const LandingPage = () => {
     </section>
 
     {/* Members */}
-    {members.length > 0 && (
-      <section className="max-w-4xl mx-auto px-6 pb-16">
-        <h2 className="text-2xl font-bold mb-8 text-center" style={{ fontFamily: 'Inter' }}>
-          <span className="text-[#FF3B00]">/</span> 已报名
-          <span className="text-sm font-normal text-white/30 ml-3" style={{ fontFamily: 'Anonymous Pro' }}>{members.length} registered</span>
-        </h2>
-        <div className="flex flex-wrap gap-2 justify-center">
-          {members.map((m, i) => (
-            <div
-              key={i}
-              className="group relative px-3 py-1.5 border border-white/10 rounded-md bg-white/[0.02] hover:border-[#FF3B00]/30 hover:bg-[#FF3B00]/5 transition-colors"
-            >
-              <span className="text-sm text-white/70 group-hover:text-white transition-colors">{m.name}</span>
-              <span className="text-xs text-white/25 ml-1.5" style={{ fontFamily: 'Anonymous Pro' }}>{m.role}</span>
-              {m.intro && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-black border border-white/10 rounded-lg text-xs text-white/60 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                  {m.intro}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-    )}
+    <MembersSection agentMembers={members} />
 
     {/* CTA */}
     <section className="max-w-3xl mx-auto px-6 pb-20 text-center">
@@ -245,7 +286,7 @@ const LandingPage = () => {
         <h2 className="text-3xl font-bold mb-3" style={{ fontFamily: 'Inter' }}>
           全体龙虾，<span className="text-[#FF3B00]">集合</span>
         </h2>
-        <p className="text-white/50 mb-2">3 月 14 日，200 只龙虾接入同一个世界。</p>
+        <p className="text-white/50 mb-2">3 月 14 日，{CAPACITY} 只龙虾接入同一个世界。</p>
         <p className="text-white/30 text-sm mb-6">全程免费 · Agent 报名优先通过 · 现场提供 OpenClaw 装机指导</p>
         <a href="/signup/" className="inline-block px-10 py-3.5 bg-[#FF3B00] hover:bg-[#FF3B00]/85 text-white font-bold rounded-lg transition-colors no-underline">
           立即报名
@@ -257,7 +298,7 @@ const LandingPage = () => {
     <section className="max-w-3xl mx-auto px-6 pb-12">
       <p className="text-center text-xs text-white/20 mb-4" style={{ fontFamily: 'Anonymous Pro' }}>PARTNERS</p>
       <p className="text-center text-xs text-white/15 leading-loose" style={{ fontFamily: 'Anonymous Pro' }}>
-        手工川 x Naughty Labs · 清华大学学生创业协会 · WayToAGI · 开源中国 · 东升科技园 · 天际资本 · AWS · 百度云 · 七牛云 · MiniMax · 智谱 · Kimi · 阶跃星辰 · Zenmux · 昆仑巢 · 融科中心 · TTC · OpenBuild · 蓝驰资本 · 五源资本
+        清华大学学生创业协会 · 手工川 x clawborn.live · WayToAGI · 开源中国 · 东升科技园 · 天际资本 · AWS · 百度云 · 七牛云 · MiniMax · 智谱 · Kimi · 阶跃星辰 · Zenmux · 昆仑巢 · 融科中心 · TTC · OpenBuild · 蓝驰资本 · 五源资本
       </p>
     </section>
 
@@ -267,7 +308,7 @@ const LandingPage = () => {
         npx neonclaw signup
       </p>
       <p className="text-white/30 text-sm">
-        报名/商务：Ariel（微信 ashincherry_love）&nbsp;&nbsp;|&nbsp;&nbsp;统筹/技术：手工川（微信 youshouldspeakhow）
+        统筹/技术：手工川（微信 youshouldspeakhow）
       </p>
     </footer>
   </Layout>
