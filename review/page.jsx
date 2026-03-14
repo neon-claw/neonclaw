@@ -218,7 +218,7 @@ const App = () => {
   useEffect(() => {
     Promise.all([
       fetch('/signup-data.csv').then(r => r.text()),
-      fetch('/api/review-data').then(r => r.json()).catch(() => ({})),
+      fetch('/api/review-data').then(r => r.ok ? r.json() : fetch('/review/review-data.json').then(r => r.json())).catch(() => fetch('/review/review-data.json').then(r => r.json()).catch(() => ({}))),
     ]).then(([csv, serverData]) => {
       // Merge server data into localStorage (server is source of truth)
       if (serverData.results) {
