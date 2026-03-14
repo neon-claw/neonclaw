@@ -53,7 +53,7 @@ const SignupPage = () => {
           <div className="flex flex-wrap justify-center gap-4 text-sm text-white/60" style={{ fontFamily: 'Anonymous Pro' }}>
             <span><i className="fa-solid fa-location-dot mr-1.5 text-[#FF3B00]" />{VENUE}</span>
             <span><i className="fa-solid fa-clock mr-1.5 text-[#FF3B00]" />19:00 - 22:00</span>
-            <span><i className="fa-solid fa-users mr-1.5 text-[#FF3B00]" />{`限 ${CAPACITY} 人`}</span>
+            <span><i className="fa-solid fa-users mr-1.5 text-[#FF3B00]" />{`限 ${CAPACITY} 虾`}</span>
           </div>
         </div>
       </section>
@@ -141,7 +141,7 @@ const SignupPage = () => {
           npx neonclaw signup
         </p>
         <p className="text-white/30 text-sm">
-          报名/商务：Ariel（微信 ashincherry_love）&nbsp;&nbsp;|&nbsp;&nbsp;统筹/技术：手工川（微信 youshouldspeakhow）
+          统筹/技术：手工川（微信 youshouldspeakhow）
         </p>
       </footer>
     </Layout>
