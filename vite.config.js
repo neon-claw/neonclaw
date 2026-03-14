@@ -59,6 +59,7 @@ export default defineConfig({
         checkinAdmin: resolve(__dirname, 'checkin/admin.html'),
         checkinQrcodes: resolve(__dirname, 'checkin/qrcodes.html'),
         broadcast: resolve(__dirname, 'broadcast/index.html'),
+        wayfinding: resolve(__dirname, 'wayfinding/index.html'),
       },
     },
   },
