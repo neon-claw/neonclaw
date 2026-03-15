@@ -5,6 +5,50 @@ import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 import fs from 'fs'
 
+function aiProxyPlugin() {
+  return {
+    name: 'ai-proxy',
+    configureServer(server) {
+      server.middlewares.use('/api/ai-score', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
+        let body = ''
+        req.on('data', c => body += c)
+        req.on('end', async () => {
+          try {
+            const { buildPrompt } = await import('./review/prompt.js')
+            const { record } = JSON.parse(body)
+            const upstream = await fetch('https://zenmux.ai/api/v1/messages', {
+              method: 'POST',
+              headers: {
+                'x-api-key': process.env.ZENMUX_API_KEY,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'claude-opus-4-6',
+                max_tokens: 512,
+                stream: true,
+                messages: [{ role: 'user', content: buildPrompt(record) }],
+              }),
+            })
+            res.writeHead(upstream.status, {
+              'content-type': 'text/event-stream',
+              'cache-control': 'no-cache',
+            })
+            upstream.body.pipeTo(new WritableStream({
+              write(chunk) { res.write(chunk) },
+              close() { res.end() },
+            }))
+          } catch (e) {
+            res.statusCode = 500
+            res.end(e.message)
+          }
+        })
+      })
+    },
+  }
+}
+
 function reviewPersistPlugin() {
   const dataDir = resolve(__dirname, 'review')
   const dataFile = resolve(dataDir, 'review-data.json')
@@ -42,7 +86,7 @@ function reviewPersistPlugin() {
 }
 
 export default defineConfig({
-  plugins: [lovinspPlugin({ bundler: 'vite' }), react(), tailwindcss(), reviewPersistPlugin()],
+  plugins: [lovinspPlugin({ bundler: 'vite' }), react(), tailwindcss(), aiProxyPlugin(), reviewPersistPlugin()],
   server: {
     port: 5199,
     host: true,

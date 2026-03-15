@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.3
+
+- 安全修复：ZenMux API Key 从前端移至服务端代理（Vercel Serverless Function）
+- 安全修复：移除前端 VITE_ZENMUX_API_KEY 暴露，改用服务端 process.env
+- 新增 `/api/ai-score` 服务端接口代理 AI 评分请求
+- `.gitignore` 添加 `dist/` 目录
+
 ## 1.2.2
 
 - 路引页面：新增设计师署名、图片序号显示
