@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.4
+
+- 导航栏新增用户头像菜单（登录状态、管理员标识、退出登录）
+- Google One Tap 登录替代 OAuth 跳转，提升登录体验
+- Demo 页面认证逻辑优化，支持非管理员访客模式
+
 ## 1.2.3
 
 - 安全修复：ZenMux API Key 从前端移至服务端代理（Vercel Serverless Function）

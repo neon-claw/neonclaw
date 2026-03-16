@@ -58,23 +58,48 @@ const DemoApp = () => {
     return email && ADMIN_EMAILS.includes(email)
   }
 
-  const [authed, setAuthed] = useState(false)
+  const [user, setUser] = useState(null) // { email, isAdmin }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setAuthed(isAdmin(session)))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setAuthed(isAdmin(session)))
+    const check = (session) => {
+      if (!session) return setUser(null)
+      const email = session.user.email
+      setUser({ email, isAdmin: isAdmin(session) })
+    }
+    supabase.auth.getSession().then(({ data: { session } }) => check(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => check(session))
     return () => subscription.unsubscribe()
   }, [])
 
-  const handleLogin = () => {
-    supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/review/demo.html',
-        queryParams: { prompt: 'select_account' },
-      },
-    })
-  }
+  // Google One Tap
+  useEffect(() => {
+    if (user) return
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    if (!clientId) return
+
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.onload = () => {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response) => {
+          const { error } = await supabase.auth.signInWithIdToken({
+            provider: 'google',
+            token: response.credential,
+          })
+          if (error) console.error('One Tap login failed:', error)
+        },
+      })
+      window.google.accounts.id.renderButton(
+        document.getElementById('google-signin-btn'),
+        { theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin_with' }
+      )
+      window.google.accounts.id.prompt()
+    }
+    document.head.appendChild(script)
+    return () => { script.remove(); window.google?.accounts?.id?.cancel() }
+  }, [user])
 
   const records = DEMO_RECORDS
 
@@ -195,13 +220,16 @@ const DemoApp = () => {
   const demoBanner = (
     <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs text-center py-2 px-4 rounded-lg mb-4 flex items-center justify-center gap-3" style={{ fontFamily: 'Anonymous Pro' }}>
       <span>演示模式 — 数据均为虚构，仅展示系统功能</span>
-      {authed ? (
+      {user && (
         <>
-          <a href="/review/" className="text-[#FF3B00] hover:underline">进入真实审批 →</a>
+          <span className="text-white/30">{user.email}</span>
+          {user.isAdmin ? (
+            <a href="/review/" className="text-[#FF3B00] hover:underline">进入真实审批 →</a>
+          ) : (
+            <span className="text-white/30">非管理员</span>
+          )}
           <button onClick={() => supabase.auth.signOut()} className="text-white/30 hover:text-white/60 cursor-pointer bg-transparent border-none" style={{ fontFamily: 'Anonymous Pro', fontSize: 'inherit' }}>退出</button>
         </>
-      ) : (
-        <button onClick={handleLogin} className="text-[#FF3B00] hover:underline cursor-pointer bg-transparent border-none" style={{ fontFamily: 'Anonymous Pro', fontSize: 'inherit' }}>管理员登录</button>
       )}
     </div>
   )
