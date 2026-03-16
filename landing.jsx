@@ -1,5 +1,6 @@
 import './app.css'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import html2canvas from 'html2canvas-pro'
 import ReactDOM from 'react-dom/client'
 import { Layout } from './components/Layout.jsx'
 import { supabase } from './signup/supabase.js'
@@ -31,18 +32,18 @@ const useSignups = () => {
 }
 
 const speakers = [
-  { name: '手工川', title: 'Lovstudio.ai 创始人 · Vibe Coding 布道者', topic: '新世界没有旧神' },
-  { name: '杨天润', title: 'clawborn.live 创始人 · OpenClaw Top贡献者', topic: 'Agentic Engineering：让 Agent 自己写代码' },
-  { name: 'Clara', title: '天际资本董事总经理', topic: '寻找 AI 原生的产品和公司' },
-  { name: '苏嘉奕', title: 'MiniMax 生态合作负责人', topic: '从工具到生态：OpenClaw 的商业化进化与未来' },
-  { name: '黄力昂', title: '共绩科技联合创始人', topic: '龙虾距离永生还有多久？' },
-  { name: 'Will', title: '硅谷 AI 观察者', topic: '硅谷龙虾生态案例分享（线上）' },
-  { name: '叶震杰', title: 'ZenMux 联合创始人 · 产品负责人', topic: '小龙虾——ZenMux 的第 11 号员工' },
-  { name: 'HW', title: '资深 Agent 开发者', topic: '一个人如何创建 93 个 Agent 技能？' },
-  { name: '汪毅', title: '首序智能创始人', topic: 'OpenClaw 安全' },
-  { name: '熊楚伊', title: 'Veryloving.ai 创始人', topic: '当 AI 成为她的守护者' },
-  { name: '常识', title: 'Kusart 创始人', topic: 'OpenClaw 企业级落地实战（线上）' },
-  { name: '张舒昱', title: '某爆火 Claw 产品负责人', topic: '线上连麦' },
+  { name: '手工川', title: 'Lovstudio.ai 创始人 · Vibe Coding 布道者', topic: '新世界没有旧神', avatar: '/avatars/手工川.jpg' },
+  { name: '杨天润', title: 'clawborn.live 创始人 · OpenClaw Top贡献者', topic: 'Agentic Engineering：让 Agent 自己写代码', avatar: '/avatars/杨天润.png' },
+  { name: 'Clara', title: '天际资本董事总经理', topic: '寻找 AI 原生的产品和公司', avatar: '/avatars/江志桐.png' },
+  { name: '苏嘉奕', title: 'MiniMax 生态合作负责人', topic: '从工具到生态：OpenClaw 的商业化进化与未来', avatar: '/avatars/苏嘉奕.png' },
+  { name: '黄力昂', title: '共绩科技联合创始人', topic: '龙虾距离永生还有多久？', avatar: '/avatars/黄力昂.png' },
+  { name: 'Will', title: '硅谷 AI 观察者', topic: '硅谷龙虾生态案例分享（线上）', avatar: '/avatars/朗朗.png' },
+  { name: '叶震杰', title: 'ZenMux 联合创始人 · 产品负责人', topic: '小龙虾——ZenMux 的第 11 号员工', avatar: '/avatars/叶震杰.png' },
+  { name: 'HW', title: '资深 Agent 开发者', topic: '一个人如何创建 93 个 Agent 技能？', avatar: '/avatars/hw.png' },
+  { name: '尹子萧', title: '首序智能研发主管', topic: 'OpenClaw 安全', avatar: '/avatars/尹子萧.png' },
+  { name: '熊楚伊', title: 'Veryloving.ai 创始人', topic: '当 AI 成为她的守护者', avatar: '/avatars/熊楚伊.png' },
+  { name: '常识', title: 'Kusart 创始人', topic: 'OpenClaw 企业级落地实战（线上）', avatar: '/avatars/常识.png' },
+  { name: '张舒昱', title: '某爆火 Claw 产品负责人', topic: '线上连麦', avatar: '/avatars/张舒煜.png' },
 ]
 
 const schedule = [
@@ -94,7 +95,7 @@ const MembersSection = ({ agentMembers }) => {
         {TABS.map(t => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => switchTab(t.key)}
             className={`px-4 py-1.5 text-sm rounded-md border transition-colors ${
               tab === t.key
                 ? 'border-[#FF3B00]/50 bg-[#FF3B00]/10 text-[#FF3B00]'
@@ -115,6 +116,141 @@ const MembersSection = ({ agentMembers }) => {
           <MemberTag key={i} name={m.name} role={m.role || m.org} intro={m.intro} />
         ))}
       </div>
+    </section>
+  )
+}
+
+const allGuests = [
+  ...speakers.map(s => ({ name: s.name, title: s.title, avatar: s.avatar })),
+  { name: '宿度', avatar: '/avatars/宿度.png' },
+  { name: '张铮', avatar: '/avatars/张铮.png' },
+  { name: '赵媛', avatar: '/avatars/赵媛.png' },
+]
+
+const SPEAKER_TABS = [
+  { key: 'list', label: '嘉宾列表', icon: 'fa-list' },
+  { key: 'wall', label: '照片墙', icon: 'fa-images' },
+]
+
+const SpeakersSection = () => {
+  const [tab, setTab] = useState(() => {
+    try { return localStorage.getItem('speakers-tab') || 'list' } catch { return 'list' }
+  })
+  const switchTab = (key) => {
+    setTab(key)
+    try { localStorage.setItem('speakers-tab', key) } catch {}
+  }
+  const wallRef = useRef(null)
+  const [exporting, setExporting] = useState(false)
+
+  const handleExport = useCallback(async () => {
+    if (!wallRef.current) return
+    setExporting(true)
+    try {
+      const canvas = await html2canvas(wallRef.current, {
+        backgroundColor: '#000',
+        scale: 2,
+        useCORS: true,
+      })
+      const link = document.createElement('a')
+      link.download = 'neonclaw-speakers.png'
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } finally {
+      setExporting(false)
+    }
+  }, [])
+
+  return (
+    <section className="max-w-4xl mx-auto px-6 pb-16">
+      <h2 className="text-2xl font-bold mb-6 text-center" style={{ fontFamily: 'Inter' }}>
+        <span className="text-[#FF3B00]">/</span> 嘉宾阵容
+      </h2>
+      <div className="flex justify-center gap-2 mb-8">
+        {SPEAKER_TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => switchTab(t.key)}
+            className={`px-4 py-1.5 text-sm rounded-md border transition-colors ${
+              tab === t.key
+                ? 'border-[#FF3B00]/50 bg-[#FF3B00]/10 text-[#FF3B00]'
+                : 'border-white/10 text-white/40 hover:text-white/60'
+            }`}
+            style={{ fontFamily: 'Anonymous Pro' }}
+          >
+            <i className={`fa-solid ${t.icon} mr-1.5`} />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'list' && (
+        <>
+          <div className="mb-8 rounded-xl overflow-hidden border border-white/10">
+            <img src="/speakers-group.png" alt="嘉宾群照" className="w-full" />
+          </div>
+          <div className="grid md:grid-cols-2 gap-0 border border-white/10">
+            {speakers.map((s, i) => (
+              <div
+                key={s.name}
+                className="group relative border-b border-r border-white/10 p-6 hover:bg-[#FF3B00]/5 transition-colors"
+              >
+                <span className="absolute top-3 right-4 text-[10px] text-white/15" style={{ fontFamily: 'Anonymous Pro' }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div className="flex items-center gap-3 mb-2">
+                  {s.avatar ? (
+                    <img src={s.avatar} alt={s.name} className="w-10 h-10 rounded-full object-cover border border-white/10 shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 shrink-0 flex items-center justify-center text-xs text-white/30">{s.name[0]}</div>
+                  )}
+                  <span className="text-lg font-black tracking-tight group-hover:text-[#FF3B00] transition-colors" style={{ fontFamily: 'Inter' }}>
+                    {s.name}
+                  </span>
+                  <span className="h-px flex-1 bg-white/10" />
+                </div>
+                <p className="text-xs text-white/35 mb-2" style={{ fontFamily: 'Anonymous Pro' }}>{s.title}</p>
+                <p className="text-sm text-white/70 pl-3 border-l-2 border-[#FF3B00]/40">{s.topic}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {tab === 'wall' && (
+        <>
+          <div ref={wallRef} className="grid grid-cols-3 gap-4 p-6 bg-black rounded-xl border border-white/10">
+            <div className="col-span-full text-center mb-2">
+              <p className="text-xs text-[#FF3B00] tracking-[0.3em] uppercase" style={{ fontFamily: 'Anonymous Pro' }}>
+                NeonClaw · March 14, 2026
+              </p>
+              <p className="text-lg font-bold mt-1" style={{ fontFamily: 'Inter' }}>嘉宾阵容</p>
+            </div>
+            {allGuests.map(g => (
+              <div key={g.name} className="flex flex-col items-center gap-2">
+                {g.avatar ? (
+                  <img src={g.avatar} alt={g.name} className="w-20 h-20 rounded-full object-cover border-2 border-white/10" />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-white/5 border-2 border-white/10 flex items-center justify-center text-lg text-white/30">{g.name[0]}</div>
+                )}
+                <span className="text-xs text-white/70 text-center" style={{ fontFamily: 'Inter' }}>{g.name}</span>
+                {g.title && <span className="text-[10px] text-white/30 text-center leading-tight" style={{ fontFamily: 'Anonymous Pro' }}>{g.title}</span>}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="px-6 py-2 text-sm rounded-md border border-[#FF3B00]/50 bg-[#FF3B00]/10 text-[#FF3B00] hover:bg-[#FF3B00]/20 transition-colors disabled:opacity-50"
+              style={{ fontFamily: 'Anonymous Pro' }}
+            >
+              <i className={`fa-solid ${exporting ? 'fa-spinner fa-spin' : 'fa-download'} mr-1.5`} />
+              {exporting ? '导出中...' : '导出为图片'}
+            </button>
+          </div>
+        </>
+      )}
     </section>
   )
 }
@@ -224,34 +360,7 @@ const LandingPage = () => {
     </section>
 
     {/* Speakers */}
-    <section className="max-w-4xl mx-auto px-6 pb-16">
-      <h2 className="text-2xl font-bold mb-10 text-center" style={{ fontFamily: 'Inter' }}>
-        <span className="text-[#FF3B00]">/</span> 嘉宾阵容
-      </h2>
-      <div className="mb-8 rounded-xl overflow-hidden border border-white/10">
-        <img src="/speakers-group.png" alt="嘉宾群照" className="w-full" />
-      </div>
-      <div className="grid md:grid-cols-2 gap-0 border border-white/10">
-        {speakers.map((s, i) => (
-          <div
-            key={s.name}
-            className="group relative border-b border-r border-white/10 p-6 hover:bg-[#FF3B00]/5 transition-colors"
-          >
-            <span className="absolute top-3 right-4 text-[10px] text-white/15" style={{ fontFamily: 'Anonymous Pro' }}>
-              {String(i + 1).padStart(2, '0')}
-            </span>
-            <div className="flex items-baseline gap-3 mb-2">
-              <span className="text-lg font-black tracking-tight group-hover:text-[#FF3B00] transition-colors" style={{ fontFamily: 'Inter' }}>
-                {s.name}
-              </span>
-              <span className="h-px flex-1 bg-white/10" />
-            </div>
-            <p className="text-xs text-white/35 mb-2" style={{ fontFamily: 'Anonymous Pro' }}>{s.title}</p>
-            <p className="text-sm text-white/70 pl-3 border-l-2 border-[#FF3B00]/40">{s.topic}</p>
-          </div>
-        ))}
-      </div>
-    </section>
+    <SpeakersSection />
 
     {/* Schedule */}
     <section className="max-w-3xl mx-auto px-6 pb-16">
