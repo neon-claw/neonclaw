@@ -2,160 +2,81 @@ import '../app.css'
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Layout } from '../components/Layout.jsx'
-import { csvToRecords } from './parse-csv.js'
-import { parse as parsePartialJson } from 'partial-json'
 import { ScoreBadge, StatusBadge, Card } from './components.jsx'
 import { supabase } from '../lib/supabase.js'
 
-const STORAGE_KEY = 'neonclaw-review-results'
-const AI_SCORES_KEY = 'neonclaw-ai-scores'
-const BOOKMARKS_KEY = 'neonclaw-bookmarks'
+const DEMO_RECORDS = [
+  { id: 'D001', name: '张明远', org: '清华大学', dept: '计算机系 博士生', role: '学生', hasAgent: '是', agentDesc: '基于 RAG 的论文检索助手，支持跨语言学术搜索', intro: '清华计算机系在读博士，研究方向为大语言模型与检索增强生成。曾在 ACL 发表论文，对 AI Agent 的学术应用场景非常感兴趣。', session: '下午场' },
+  { id: 'D002', name: '李思琪', org: '字节跳动', dept: '产品经理', role: '互联网从业者', hasAgent: '否', agentDesc: '', intro: '负责飞书智能助手产品线，关注 AI 在企业协作场景的落地。希望了解开源社区在 Agent 方向的最新进展。', session: '上午场' },
+  { id: 'D003', name: '王浩然', org: '独立开发者', dept: '', role: '创业者', hasAgent: '是', agentDesc: '自动化客服 Agent，集成微信/飞书多渠道消息', intro: '全栈开发者，正在做一个面向中小企业的 AI 客服 SaaS。产品已有 200+ 付费用户，想认识更多技术同好。', session: '全天' },
+  { id: 'D004', name: '陈雨薇', org: '清华大学', dept: '新闻学院 硕士生', role: '学生', hasAgent: '否', agentDesc: '', intro: '关注 AI 对新闻行业的影响，正在撰写关于 AI 生成内容伦理问题的毕业论文。希望从技术视角理解 Agent 的能力边界。', session: '上午场' },
+  { id: 'D005', name: '赵凯文', org: '美团', dept: '算法工程师', role: '程序员', hasAgent: '是', agentDesc: '代码审查 Agent，自动检测 PR 中的安全隐患和代码规范问题', intro: '5 年后端开发经验，目前在美团做推荐系统。业余时间在 GitHub 上维护一个开源的 Code Review Agent 项目，star 数 1.2k。', session: '全天' },
+  { id: 'D006', name: '刘诗涵', org: '36氪', dept: '科技记者', role: '媒体', hasAgent: '否', agentDesc: '', intro: '36氪 AI 方向记者，长期跟踪报道国内 AI 创业公司。参加活动主要是采访和报道。', session: '上午场' },
+  { id: 'D007', name: '林子轩', org: '清华大学', dept: '交叉信息研究院', role: '学生', hasAgent: '是', agentDesc: '多模态 Agent，能同时处理文本、图像和语音指令完成复杂任务', intro: '姚班大四学生，对多智能体协作系统感兴趣。目前在做一个让多个 Agent 协同完成软件开发任务的框架。', session: '全天' },
+  { id: 'D008', name: '杨佳慧', org: '红杉资本', dept: '投资经理', role: '投资人', hasAgent: '否', agentDesc: '', intro: '关注 AI Infra 和开发者工具方向的早期投资。过去一年看了 50+ Agent 相关项目，想来了解社区生态。', session: '下午场' },
+  { id: 'D009', name: '吴天成', org: '华为', dept: '云计算部门 架构师', role: '程序员', hasAgent: '是', agentDesc: '运维 Agent，自动诊断服务器故障并执行修复操作', intro: '10 年云计算经验，目前负责华为云 AI 平台架构。对如何在企业级场景安全地部署 Agent 有深入思考。', session: '下午场' },
+  { id: 'D010', name: '孙小鹿', org: '北京大学', dept: '心理学系', role: '学生', hasAgent: '否', agentDesc: '', intro: '研究方向是人机交互心理学，特别关注人们对 AI Agent 的信任度和依赖问题。想从技术社区了解一线开发者的视角。', session: '上午场' },
+]
 
-const loadLocal = (key) => {
-  try { return JSON.parse(localStorage.getItem(key)) || {} } catch { return {} }
+const DEMO_AI_SCORES = {
+  D001: { score: 9, reason: '清华计算机系博士，ACL 发表经历，有实际 RAG Agent 项目，非常匹配活动主题。' },
+  D003: { score: 8, reason: '独立开发者，有实际落地的 Agent 产品且有付费用户，实战经验丰富。' },
+  D005: { score: 8, reason: '有开源 Agent 项目且有一定影响力（1.2k stars），技术背景扎实。' },
+  D007: { score: 9, reason: '姚班学生，多智能体协作研究方向完美契合，技术能力顶尖。' },
+  D009: { score: 7, reason: '企业级 Agent 部署经验，架构师视角有价值，但偏传统云计算。' },
 }
 
-const persistToServer = (data) => {
-  fetch('/api/review-data', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(data),
-  }).catch(() => {})
+const DEMO_RESULTS = {
+  D001: 'approved',
+  D003: 'approved',
+  D007: 'approved',
 }
 
-const loadResults = () => loadLocal(STORAGE_KEY)
-const saveResults = (results) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(results))
-  persistToServer({ results })
+const DEMO_BOOKMARKS = {
+  D005: true,
+  D007: true,
 }
 
-const loadAiScores = () => loadLocal(AI_SCORES_KEY)
-const saveAiScores = (scores) => {
-  localStorage.setItem(AI_SCORES_KEY, JSON.stringify(scores))
-  persistToServer({ aiScores: scores })
-}
-
-const loadBookmarks = () => loadLocal(BOOKMARKS_KEY)
-const saveBookmarks = (bm) => {
-  localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bm))
-  persistToServer({ bookmarks: bm })
-}
-
-async function aiScoreStream(record, onPartial) {
-  const res = await fetch('/api/ai-score', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ record }),
-  })
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder()
-  let full = ''
-  let buf = ''
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buf += decoder.decode(value, { stream: true })
-    const lines = buf.split('\n')
-    buf = lines.pop()
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue
-      const data = line.slice(6)
-      if (data === '[DONE]') continue
-      try {
-        const evt = JSON.parse(data)
-        if (evt.type === 'content_block_delta' && evt.delta?.text) {
-          full += evt.delta.text
-          try { onPartial(parsePartialJson(full)) } catch {}
-        }
-      } catch {}
-    }
-  }
-  const match = full.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('No JSON in response')
-  return JSON.parse(match[0])
-}
-
-
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
-
-const isAdmin = (session) => {
-  const email = session?.user?.email?.toLowerCase()
-  return email && ADMIN_EMAILS.includes(email)
-}
-
-const App = () => {
-  const [authed, setAuthed] = useState(null) // null = loading
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session || !isAdmin(session)) {
-        window.location.replace('/review/demo.html')
-      } else {
-        setAuthed(true)
-      }
-    })
-  }, [])
-
-  if (!authed) return <div className="min-h-screen bg-black" />
-
-  return <ReviewApp />
-}
-
-const ReviewApp = () => {
-  const [records, setRecords] = useState([])
-  const [results, setResults] = useState(loadResults)
-  const [aiScores, setAiScores] = useState(loadAiScores)
-  const [bookmarks, setBookmarks] = useState(loadBookmarks)
-  const [currentIdx, setCurrentIdx] = useState(0)
+const DemoApp = () => {
+  const [results, setResults] = useState(DEMO_RESULTS)
+  const [aiScores, setAiScores] = useState(DEMO_AI_SCORES)
+  const [bookmarks, setBookmarks] = useState(DEMO_BOOKMARKS)
+  const [currentIdx, setCurrentIdx] = useState(3) // Start at an unreviewed card
   const [swipeDir, setSwipeDir] = useState(null)
   const [history, setHistory] = useState([])
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiStreamData, setAiStreamData] = useState(null)
   const [immersive, setImmersive] = useState(false)
-  const [autoAi, setAutoAi] = useState(() => localStorage.getItem('neonclaw-auto-ai') === 'true')
   const [filter, setFilterRaw] = useState('all')
   const setFilter = (f) => { setFilterRaw(f); setCurrentIdx(0) }
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const searchRef = useRef(null)
   const touchStart = useRef(null)
-  const initialized = useRef(false)
+
+  const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+  const isAdmin = (session) => {
+    const email = session?.user?.email?.toLowerCase()
+    return email && ADMIN_EMAILS.includes(email)
+  }
+
+  const [authed, setAuthed] = useState(false)
 
   useEffect(() => {
-    Promise.all([
-      fetch('/signup-data.csv').then(r => r.text()),
-      fetch('/api/review-data').then(r => r.ok ? r.json() : fetch('/review/review-data.json').then(r => r.json())).catch(() => fetch('/review/review-data.json').then(r => r.json()).catch(() => ({}))),
-    ]).then(([csv, serverData]) => {
-      // Merge server data into localStorage (server is source of truth)
-      if (serverData.results) {
-        const merged = { ...loadResults(), ...serverData.results }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
-        setResults(merged)
-      }
-      if (serverData.aiScores) {
-        const merged = { ...loadAiScores(), ...serverData.aiScores }
-        localStorage.setItem(AI_SCORES_KEY, JSON.stringify(merged))
-        setAiScores(merged)
-      }
-      if (serverData.bookmarks) {
-        const merged = { ...loadBookmarks(), ...serverData.bookmarks }
-        localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(merged))
-        setBookmarks(merged)
-      }
-
-      const recs = csvToRecords(csv)
-      setRecords(recs)
-      const saved = serverData.results || loadResults()
-      const firstUnreviewed = recs.findIndex(r => !saved[r.id])
-      if (firstUnreviewed >= 0) setCurrentIdx(firstUnreviewed)
-      initialized.current = true
-    })
+    supabase.auth.getSession().then(({ data: { session } }) => setAuthed(isAdmin(session)))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setAuthed(isAdmin(session)))
+    return () => subscription.unsubscribe()
   }, [])
 
-  useEffect(() => { if (initialized.current) saveResults(results) }, [results])
-  useEffect(() => { if (initialized.current) saveAiScores(aiScores) }, [aiScores])
-  useEffect(() => { if (initialized.current) saveBookmarks(bookmarks) }, [bookmarks])
+  const handleLogin = () => {
+    supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/review/demo.html',
+        queryParams: { prompt: 'select_account' },
+      },
+    })
+  }
+
+  const records = DEMO_RECORDS
 
   const isTsinghua = (r) => /清华/.test(r.org)
   const filteredRecords = records.filter(r => {
@@ -177,53 +98,22 @@ const ReviewApp = () => {
     })
   }, [record])
 
-  const toggleAutoAi = useCallback(() => {
-    setAutoAi(v => { const next = !v; localStorage.setItem('neonclaw-auto-ai', String(next)); return next })
-  }, [])
-
-  const triggerAiScore = useCallback(async () => {
-    if (!record || aiLoading) return
-    setAiLoading(true)
-    setAiStreamData(null)
-    try {
-      const result = await aiScoreStream(record, (obj) => setAiStreamData(obj))
-      setAiScores(prev => ({ ...prev, [record.id]: result }))
-      setAiStreamData(null)
-    } catch (e) {
-      console.error('AI scoring failed:', e)
-      setAiStreamData(null)
-    }
-    setAiLoading(false)
-  }, [record, aiLoading, aiScores])
-
-  // Auto AI score when switching to a new card
-  useEffect(() => {
-    if (autoAi && record && !aiScores[record.id] && !aiLoading) {
-      triggerAiScore()
-    }
-  }, [currentIdx, autoAi]) // intentionally minimal deps
-
-  const batchAiScore = useCallback(async () => {
-    if (records.length === 0) return
-    for (const rec of records) {
-      if (aiScores[rec.id]) continue
-      setAiLoading(true)
-      setAiStreamText('')
-      try {
-        const result = await aiScoreStream(rec, (text) => setAiStreamText(text))
-        setAiScores(prev => {
-          const next = { ...prev, [rec.id]: result }
-          saveAiScores(next)
-          return next
-        })
-        setAiStreamText('')
-      } catch (e) {
-        console.error(`AI scoring failed for ${rec.id}:`, e)
-        setAiStreamText('')
-      }
-    }
-    setAiLoading(false)
-  }, [records, aiScores])
+  const mockAiScore = useCallback(() => {
+    if (!record || aiScores[record.id]) return
+    const scores = [6, 7, 7, 8, 8, 8, 9]
+    const reasons = [
+      '背景与活动主题相关，有一定参与价值。',
+      '专业背景匹配，能为活动带来多元视角。',
+      '技术能力突出，对 Agent 生态有深入了解。',
+    ]
+    setAiScores(prev => ({
+      ...prev,
+      [record.id]: {
+        score: scores[Math.floor(Math.random() * scores.length)],
+        reason: reasons[Math.floor(Math.random() * reasons.length)],
+      },
+    }))
+  }, [record, aiScores])
 
   const decide = useCallback((decision) => {
     if (!record) return
@@ -245,15 +135,11 @@ const ReviewApp = () => {
   }, [history])
 
   const navigate = useCallback((dir) => {
-    if (record && !results[record.id]) {
-      setResults(prev => ({ ...prev, [record.id]: 'skipped' }))
-    }
     setCurrentIdx(i => Math.max(0, Math.min(i + dir, filteredRecords.length - 1)))
-  }, [record, results, filteredRecords.length])
+  }, [filteredRecords.length])
 
   useEffect(() => {
     const onKey = (e) => {
-      // Don't handle shortcuts when search input is focused
       if (searchOpen && document.activeElement === searchRef.current) {
         if (e.key === 'Escape') { setSearchOpen(false); setSearchQuery('') }
         return
@@ -266,7 +152,7 @@ const ReviewApp = () => {
       else if (e.key === 'ArrowUp') { e.preventDefault(); decide('approved') }
       else if (e.key === 'ArrowDown') { e.preventDefault(); decide('rejected') }
       else if (e.key === 'z' || e.key === 'Z') undo()
-      else if (e.key === 'a' || e.key === 'A') triggerAiScore()
+      else if (e.key === 'a' || e.key === 'A') mockAiScore()
       else if (e.key === ' ') { e.preventDefault(); decide('skipped') }
       else if (e.key === 'b' || e.key === 'B') toggleBookmark()
       else if (e.key === 'f' || e.key === 'F') setImmersive(v => !v)
@@ -274,7 +160,7 @@ const ReviewApp = () => {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [decide, undo, triggerAiScore, searchOpen])
+  }, [decide, undo, mockAiScore, searchOpen])
 
   useEffect(() => {
     if (searchOpen && searchRef.current) searchRef.current.focus()
@@ -291,39 +177,11 @@ const ReviewApp = () => {
     else if (dx < -60) decide('rejected')
   }
 
-  const download = (content, filename, type) => {
-    const blob = new Blob([content], { type })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = filename; a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const exportResults = () => {
-    const data = records.map(r => ({
-      ...r,
-      decision: results[r.id] || 'pending',
-      aiScore: aiScores[r.id]?.score ?? null,
-      aiReason: aiScores[r.id]?.reason ?? null,
-      bookmarked: !!bookmarks[r.id],
-    }))
-    download(JSON.stringify(data, null, 2), 'review-results.json', 'application/json')
-  }
-
-  const exportApproved = () => {
-    const approved = records.filter(r => results[r.id] === 'approved')
-    const csvField = (v) => v.includes(',') || v.includes('"') || v.includes('\n') ? `"${v.replace(/"/g, '""')}"` : v
-    const header = '姓名,手机号,微信号,单位,身份,参加场次'
-    const rows = approved.map(r => [r.name, r.phone, r.wechat, r.org, r.role, r.session].map(csvField).join(','))
-    download('\uFEFF' + [header, ...rows].join('\n'), 'approved-list.csv', 'text/csv;charset=utf-8')
-  }
-
   const total = filteredRecords.length
   const approved = filteredRecords.filter(r => results[r.id] === 'approved').length
   const rejected = filteredRecords.filter(r => results[r.id] === 'rejected').length
   const skipped = filteredRecords.filter(r => results[r.id] === 'skipped').length
   const reviewed = approved + rejected + skipped
-  const scored = Object.keys(aiScores).length
   const bookmarked = Object.keys(bookmarks).length
 
   const filters = [
@@ -333,6 +191,20 @@ const ReviewApp = () => {
     ['pending', '待审'],
     ['bookmarked', '收藏'],
   ]
+
+  const demoBanner = (
+    <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs text-center py-2 px-4 rounded-lg mb-4 flex items-center justify-center gap-3" style={{ fontFamily: 'Anonymous Pro' }}>
+      <span>演示模式 — 数据均为虚构，仅展示系统功能</span>
+      {authed ? (
+        <>
+          <a href="/review/" className="text-[#FF3B00] hover:underline">进入真实审批 →</a>
+          <button onClick={() => supabase.auth.signOut()} className="text-white/30 hover:text-white/60 cursor-pointer bg-transparent border-none" style={{ fontFamily: 'Anonymous Pro', fontSize: 'inherit' }}>退出</button>
+        </>
+      ) : (
+        <button onClick={handleLogin} className="text-[#FF3B00] hover:underline cursor-pointer bg-transparent border-none" style={{ fontFamily: 'Anonymous Pro', fontSize: 'inherit' }}>管理员登录</button>
+      )}
+    </div>
+  )
 
   const navActions = (
     <div className="flex gap-2">
@@ -344,23 +216,8 @@ const ReviewApp = () => {
       >
         {filters.map(([v, l]) => <option key={v} value={v} className="bg-black">{l}</option>)}
       </select>
-      <button onClick={toggleAutoAi} className={`px-3 py-1.5 text-xs rounded border transition-colors cursor-pointer ${autoAi ? 'border-green-500/50 text-green-400' : 'border-white/20 text-white/50 hover:text-white hover:border-white/40'}`} style={{ fontFamily: 'Anonymous Pro' }}>
-        自动评分 {autoAi ? 'ON' : 'OFF'}
-      </button>
       <button onClick={() => setImmersive(true)} className="px-3 py-1.5 text-xs rounded border border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors cursor-pointer" style={{ fontFamily: 'Anonymous Pro' }}>
         沉浸 (f)
-      </button>
-      <button onClick={batchAiScore} disabled={aiLoading} className="px-3 py-1.5 text-xs rounded border border-[#FF3B00]/50 text-[#FF3B00] hover:bg-[#FF3B00]/10 disabled:opacity-40 transition-colors cursor-pointer" style={{ fontFamily: 'Anonymous Pro' }}>
-        {aiLoading ? `评分中 (${scored}/${total})` : `批量AI评分 (${scored}/${total})`}
-      </button>
-      <button onClick={exportApproved} className="px-3 py-1.5 text-xs rounded bg-[#FF3B00] text-white hover:bg-[#FF3B00]/80 transition-colors cursor-pointer" style={{ fontFamily: 'Anonymous Pro' }}>
-        导出通过 ({approved})
-      </button>
-      <button onClick={exportResults} className="px-3 py-1.5 text-xs rounded border border-white/20 text-white/50 hover:text-white transition-colors cursor-pointer" style={{ fontFamily: 'Anonymous Pro' }}>
-        导出全部
-      </button>
-      <button onClick={() => supabase.auth.signOut().then(() => window.location.replace('/review/demo.html'))} className="px-3 py-1.5 text-xs rounded border border-white/20 text-white/30 hover:text-white/60 transition-colors cursor-pointer" style={{ fontFamily: 'Anonymous Pro' }}>
-        退出
       </button>
     </div>
   )
@@ -368,7 +225,7 @@ const ReviewApp = () => {
   const searchMatches = searchQuery
     ? records.reduce((acc, r, i) => {
         const q = searchQuery.toLowerCase()
-        const hay = `${r.name} ${r.org} ${r.dept} ${r.role} ${r.intro} ${r.agentDesc} ${r.phone} ${r.wechat}`.toLowerCase()
+        const hay = `${r.name} ${r.org} ${r.dept} ${r.role} ${r.intro} ${r.agentDesc}`.toLowerCase()
         if (hay.includes(q)) acc.push(i)
         return acc
       }, [])
@@ -411,7 +268,6 @@ const ReviewApp = () => {
                 </button>
               )
             })}
-            {searchMatches.length > 20 && <div className="px-4 py-2 text-xs text-white/30 text-center">还有 {searchMatches.length - 20} 条结果...</div>}
           </div>
         )}
       </div>
@@ -436,9 +292,9 @@ const ReviewApp = () => {
         record={record}
         swipeDir={swipeDir}
         aiResult={aiScores[record.id]}
-        onAiScore={triggerAiScore}
-        aiLoading={aiLoading}
-        aiStreamData={aiStreamData}
+        onAiScore={mockAiScore}
+        aiLoading={false}
+        aiStreamData={null}
         bookmarked={!!bookmarks[record.id]}
         onToggleBookmark={toggleBookmark}
         decision={results[record.id]}
@@ -460,7 +316,7 @@ const ReviewApp = () => {
       <div className="text-lg">全部审批完成</div>
     </div>
   ) : (
-    <div className="text-center py-20 text-white/40">加载中...</div>
+    <div className="text-center py-20 text-white/40">无数据</div>
   )
 
   const statsBar = (
@@ -480,23 +336,18 @@ const ReviewApp = () => {
       <>
       {searchPanel}
       <div className="fixed inset-0 z-[100] bg-black text-white flex flex-col" style={{ fontFamily: 'Noto Sans, sans-serif' }} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        {/* Minimal top bar */}
         <div className="flex items-center justify-between px-6 h-10 border-b border-white/5">
           <div className="flex items-center gap-3 text-xs text-white/30" style={{ fontFamily: 'Anonymous Pro' }}>
+            <span className="text-yellow-400">DEMO</span>
             <span>{currentIdx + 1} / {total}</span>
             <span className="text-green-500">{approved}</span>
             <span className="text-red-500">{rejected}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={exportResults} className="text-xs text-white/30 hover:text-white/60 cursor-pointer" style={{ fontFamily: 'Anonymous Pro' }}>导出</button>
-            <button onClick={() => setImmersive(false)} className="text-xs text-white/30 hover:text-white/60 cursor-pointer" style={{ fontFamily: 'Anonymous Pro' }}>ESC 退出</button>
-          </div>
+          <button onClick={() => setImmersive(false)} className="text-xs text-white/30 hover:text-white/60 cursor-pointer" style={{ fontFamily: 'Anonymous Pro' }}>ESC 退出</button>
         </div>
-        {/* Progress thin line */}
         <div className="w-full h-0.5 bg-white/5">
           <div className="h-full bg-[#FF3B00] transition-all duration-300" style={{ width: total ? `${(reviewed / total) * 100}%` : '0%' }} />
         </div>
-        {/* Card centered */}
         <div className="flex-1 flex items-center justify-center overflow-y-auto px-6 py-6">
           <div className="w-full max-w-xl">
             {cardSection}
@@ -512,6 +363,7 @@ const ReviewApp = () => {
     {searchPanel}
     <Layout actions={navActions}>
       <div className="max-w-5xl mx-auto px-6 py-6" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        {demoBanner}
         {progressBar}
         {cardSection}
         {statsBar}
@@ -521,4 +373,4 @@ const ReviewApp = () => {
   )
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+ReactDOM.createRoot(document.getElementById('root')).render(<DemoApp />)
