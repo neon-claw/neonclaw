@@ -31,19 +31,22 @@ const useSignups = () => {
   return { count, members }
 }
 
-const speakers = [
+const guests = [
   { name: '手工川', title: 'Lovstudio.ai 创始人 · Vibe Coding 布道者', topic: '新世界没有旧神', avatar: '/avatars/手工川.jpg' },
+  { name: '张铮', title: '清华创协主席', avatar: '/avatars/张铮.png' },
+  { name: '赵媛', title: '中关村东升科技园创新项目负责人', avatar: '/avatars/赵媛.png' },
   { name: '杨天润', title: 'clawborn.live 创始人 · OpenClaw Top贡献者', topic: 'Agentic Engineering：让 Agent 自己写代码', avatar: '/avatars/杨天润.png' },
   { name: 'Clara', title: '天际资本董事总经理', topic: '寻找 AI 原生的产品和公司', avatar: '/avatars/江志桐.png' },
-  { name: '苏嘉奕', title: 'MiniMax 生态合作负责人', topic: '从工具到生态：OpenClaw 的商业化进化与未来', avatar: '/avatars/苏嘉奕.png' },
-  { name: '黄力昂', title: '共绩科技联合创始人', topic: '龙虾距离永生还有多久？', avatar: '/avatars/黄力昂.png' },
-  { name: 'Will', title: '硅谷 AI 观察者', topic: '硅谷龙虾生态案例分享（线上）', avatar: '/avatars/朗朗.png' },
+  { name: '宿度', title: '七牛云副总裁', avatar: '/avatars/宿度.png' },
   { name: '叶震杰', title: 'ZenMux 联合创始人 · 产品负责人', topic: '小龙虾——ZenMux 的第 11 号员工', avatar: '/avatars/叶震杰.png' },
+  { name: '黄力昂', title: '共绩科技联合创始人', topic: '龙虾距离永生还有多久？', avatar: '/avatars/黄力昂.png' },
+  { name: '苏嘉奕', title: 'MiniMax 生态合作负责人', topic: '从工具到生态：OpenClaw 的商业化进化与未来', avatar: '/avatars/苏嘉奕.png' },
+  { name: '张舒昱', title: '某爆火 Claw 产品负责人', topic: '线上连麦', avatar: '/avatars/张舒煜.png' },
   { name: 'HW', title: '资深 Agent 开发者', topic: '一个人如何创建 93 个 Agent 技能？', avatar: '/avatars/hw.png' },
   { name: '尹子萧', title: '首序智能研发主管', topic: 'OpenClaw 安全', avatar: '/avatars/尹子萧.png' },
-  { name: '熊楚伊', title: 'Veryloving.ai 创始人', topic: '当 AI 成为她的守护者', avatar: '/avatars/熊楚伊.png' },
+  { name: 'Will', title: '硅谷 AI 观察者', topic: '硅谷龙虾生态案例分享（线上）', avatar: '/avatars/朗朗.png' },
   { name: '常识', title: 'Kusart 创始人', topic: 'OpenClaw 企业级落地实战（线上）', avatar: '/avatars/常识.png' },
-  { name: '张舒昱', title: '某爆火 Claw 产品负责人', topic: '线上连麦', avatar: '/avatars/张舒煜.png' },
+  { name: '熊楚伊', title: 'Veryloving.ai 创始人', topic: '当 AI 成为她的守护者', avatar: '/avatars/熊楚伊.png' },
 ]
 
 const schedule = [
@@ -120,12 +123,6 @@ const MembersSection = ({ agentMembers }) => {
   )
 }
 
-const allGuests = [
-  ...speakers.map(s => ({ name: s.name, title: s.title, avatar: s.avatar })),
-  { name: '宿度', avatar: '/avatars/宿度.png' },
-  { name: '张铮', avatar: '/avatars/张铮.png' },
-  { name: '赵媛', avatar: '/avatars/赵媛.png' },
-]
 
 const SPEAKER_TABS = [
   { key: 'list', label: '嘉宾列表', icon: 'fa-list' },
@@ -190,7 +187,7 @@ const SpeakersSection = () => {
             <img src="/speakers-group.png" alt="嘉宾群照" className="w-full" />
           </div>
           <div className="grid md:grid-cols-2 gap-0 border border-white/10">
-            {speakers.map((s, i) => (
+            {guests.map((s, i) => (
               <div
                 key={s.name}
                 className="group relative border-b border-r border-white/10 p-6 hover:bg-[#FF3B00]/5 transition-colors"
@@ -219,33 +216,100 @@ const SpeakersSection = () => {
 
       {tab === 'wall' && (
         <>
-          <div ref={wallRef} className="grid grid-cols-3 gap-4 p-6 bg-black rounded-xl border border-white/10">
-            <div className="col-span-full text-center mb-2">
-              <p className="text-xs text-[#FF3B00] tracking-[0.3em] uppercase" style={{ fontFamily: 'Anonymous Pro' }}>
-                NeonClaw · March 14, 2026
+          <div ref={wallRef} className="relative overflow-hidden" style={{ background: '#050508' }}>
+            {/* CRT scanlines */}
+            <div className="absolute inset-0 pointer-events-none z-10 opacity-[0.04]"
+              style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, #000 2px, #000 4px)' }} />
+            {/* Corner decorations */}
+            <div className="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-[#FF3B00]/60 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-20 h-20 border-t-2 border-r-2 border-[#FF3B00]/60 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-20 h-20 border-b-2 border-l-2 border-[#FF3B00]/60 pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-[#FF3B00]/60 pointer-events-none" />
+
+            {/* Title bar */}
+            <div className="relative text-center py-5 border-b border-[#FF3B00]/30"
+              style={{ background: 'linear-gradient(180deg, #FF3B00/15 0%, transparent 100%)' }}>
+              <p className="text-2xl font-black tracking-[0.15em] uppercase" style={{ fontFamily: 'Inter', textShadow: '0 0 20px rgba(255,59,0,0.5), 0 0 40px rgba(255,59,0,0.2)' }}>
+                <span className="text-[#FF3B00]">OPENCLAW</span> <span className="text-white">MEETUP 2026</span>
               </p>
-              <p className="text-lg font-bold mt-1" style={{ fontFamily: 'Inter' }}>嘉宾阵容</p>
+              <p className="text-[10px] text-[#FF3B00]/50 tracking-[0.4em] uppercase mt-1" style={{ fontFamily: 'Anonymous Pro' }}>
+                03.14 · BEIJING · 嘉宾阵容
+              </p>
             </div>
-            {allGuests.map(g => (
-              <div key={g.name} className="flex flex-col items-center gap-2">
-                {g.avatar ? (
-                  <img src={g.avatar} alt={g.name} className="w-20 h-20 rounded-full object-cover border-2 border-white/10" />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-white/5 border-2 border-white/10 flex items-center justify-center text-lg text-white/30">{g.name[0]}</div>
-                )}
-                <span className="text-xs text-white/70 text-center" style={{ fontFamily: 'Inter' }}>{g.name}</span>
-                {g.title && <span className="text-[10px] text-white/30 text-center leading-tight" style={{ fontFamily: 'Anonymous Pro' }}>{g.title}</span>}
-              </div>
-            ))}
+
+            {/* Character select grid */}
+            <div className="relative grid grid-cols-3 gap-[2px] p-4" style={{ background: '#0a0a0f' }}>
+              {guests.map((g, i) => (
+                <div
+                  key={g.name}
+                  className="group relative cursor-pointer"
+                  style={{ background: '#0c0c12' }}
+                >
+                  {/* Slot frame */}
+                  <div className="relative aspect-[3/4] overflow-hidden border border-white/[0.06] group-hover:border-[#FF3B00]/80 transition-colors">
+                    {/* Character portrait */}
+                    {g.avatar ? (
+                      <img
+                        src={g.avatar}
+                        alt={g.name}
+                        className="absolute inset-0 w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-300"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-white/[0.02] flex items-center justify-center text-3xl text-white/10 font-black">{g.name[0]}</div>
+                    )}
+
+                    {/* Hover overlay glow */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#FF3B00]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                    {/* Dark gradient bottom for text readability */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+
+                    {/* Index - top left */}
+                    <span className="absolute top-1.5 left-2 text-[10px] font-bold text-[#FF3B00]/60 group-hover:text-[#FF3B00]" style={{ fontFamily: 'Anonymous Pro' }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+
+                    {/* Name plate at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                      <div className="text-sm font-black text-white tracking-wide leading-tight group-hover:text-[#FF3B00] transition-colors" style={{ fontFamily: 'Inter', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                        {g.name}
+                      </div>
+                      {g.title && (
+                        <div className="text-[9px] text-white/40 mt-0.5 truncate" style={{ fontFamily: 'Anonymous Pro' }}>
+                          {g.title}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Selection bracket corners on hover */}
+                    <div className="absolute top-1 left-1 w-3 h-3 border-t border-l border-[#FF3B00] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute top-1 right-1 w-3 h-3 border-t border-r border-[#FF3B00] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute bottom-1 left-1 w-3 h-3 border-b border-l border-[#FF3B00] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute bottom-1 right-1 w-3 h-3 border-b border-r border-[#FF3B00] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom bar */}
+            <div className="relative border-t border-[#FF3B00]/30 py-3 px-6 flex items-center justify-between">
+              <p className="text-[10px] text-white/20" style={{ fontFamily: 'Anonymous Pro' }}>
+                NEONCLAW · 2026.03.14
+              </p>
+              <p className="text-[10px] text-[#FF3B00]/40" style={{ fontFamily: 'Anonymous Pro' }}>
+                {guests.length} LOBSTERS READY
+              </p>
+            </div>
           </div>
+
           <div className="flex justify-center mt-6">
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="px-6 py-2 text-sm rounded-md border border-[#FF3B00]/50 bg-[#FF3B00]/10 text-[#FF3B00] hover:bg-[#FF3B00]/20 transition-colors disabled:opacity-50"
+              className="px-6 py-2.5 text-sm rounded-lg border border-[#FF3B00]/50 bg-[#FF3B00]/10 text-[#FF3B00] hover:bg-[#FF3B00]/20 transition-colors disabled:opacity-50"
               style={{ fontFamily: 'Anonymous Pro' }}
             >
-              <i className={`fa-solid ${exporting ? 'fa-spinner fa-spin' : 'fa-download'} mr-1.5`} />
+              <i className={`fa-solid ${exporting ? 'fa-spinner fa-spin' : 'fa-download'} mr-2`} />
               {exporting ? '导出中...' : '导出为图片'}
             </button>
           </div>
