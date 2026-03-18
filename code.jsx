@@ -136,6 +136,22 @@ const useToolbar = (targetRef) => {
       await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
 
       const zip = new JSZip();
+      // Export grid section as one image
+      const gridSection = el.querySelector('[data-grid-section]');
+      if (gridSection) {
+        const gridRect = gridSection.getBoundingClientRect();
+        const gx = (gridRect.left - posterRect.left) * scale;
+        const gy = (gridRect.top - posterRect.top) * scale;
+        const gw = gridRect.width * scale;
+        const gh = gridRect.height * scale;
+        const gc = document.createElement('canvas');
+        gc.width = gw;
+        gc.height = gh;
+        gc.getContext('2d').drawImage(img, gx, gy, gw, gh, 0, 0, gw, gh);
+        const fullBlob = await new Promise(r => gc.toBlob(r, 'image/jpeg', 0.95));
+        zip.file('00-FULL.jpg', fullBlob);
+      }
+
       for (const cell of cells) {
         const label = cell.getAttribute('data-grid-cell');
         const idx = cell.getAttribute('data-grid-index');
@@ -310,7 +326,7 @@ const App = () => {
 
 
       {/* ================= SECTION 2: THE ABSTRACT GRID ================= */}
-      <div className="relative py-[60px] px-[40px] z-10">
+      <div data-grid-section className="relative py-[60px] px-[40px] z-10">
         {/* Row 1 */}
         <div className="grid grid-cols-4 gap-[3px]">
           {gridItems.slice(0, 4).map(({ label, bg }, index) => (
